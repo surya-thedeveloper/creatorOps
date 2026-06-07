@@ -366,3 +366,151 @@ Database constraints protect data integrity but do not automatically add lookup 
     *   `idx_content_brand_deleted` $\rightarrow$ `content(brand_id, is_deleted)`
 *   **Kanban Workflow Optimization**:
     *   `idx_content_stage_due` $\rightarrow$ `content(brand_id, stage, due_date)` (Used for board filters and due date notifications).
+
+---
+
+# Entity Relationship Diagram (ERD)
+
+This section presents the visual modeling, relationship rules, and architectural insights validating the database layout of **CreatorOps**.
+
+## 1. Physical vs. Logical Membership Representation
+
+In the current physical database schema (**V1**), the logical concept of **membership** is denormalized directly into the `"user"` table. 
+*   **Logical Membership**: Decouples identity (authentication credentials) from tenant context (authorization role and organization association).
+*   **Physical Realization**: In **V1**, each User belongs to exactly one Organization and holds a single organizational role. To optimize query performance and eliminate unnecessary join tables during boot, this is physically implemented via `user.organization_id` and `user.role`.
+*   **Deferred Extension**: Introducing a separate physical `membership` table is deferred to Phase 2 to support multi-tenant user access (e.g. contributors working across multiple organizations with a single login).
+
+The physical schema ERD below reflects the exact implemented PostgreSQL schema.
+
+---
+
+## 2. Mermaid Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    ORGANIZATION ||--o{ BRAND : contains
+    ORGANIZATION ||--o{ "user" : employs
+    BRAND ||--o{ CONTENT : owns
+    CONTENT ||--o{ ASSIGNMENT : assigns
+    CONTENT ||--o{ TASK : contains
+    CONTENT ||--o{ COMMENT : contains
+    CONTENT ||--o{ RESEARCH_ITEM : contains
+    CONTENT ||--o{ SCRIPT : contains
+    CONTENT ||--o{ ASSET : contains
+    "user" ||--o{ ASSIGNMENT : performs
+    "user" ||--o{ COMMENT : writes
+    "user" ||--o{ RESEARCH_ITEM : contributes
+    "user" ||--o{ SCRIPT_VERSION : saves
+    SCRIPT ||--o{ SCRIPT_VERSION : catalogs
+    ORGANIZATION ||--o{ ACTIVITY_LOG : archives
+```
+
+---
+
+## 3. Detailed Entity Relationship Explanation
+
+### organization
+*   **Purpose**: The primary multi-tenant partition root.
+*   **Parent Entity**: None.
+*   **Child Entities**: `brand`, `"user"`, `activity_log`.
+*   **Business Responsibility**: Enforces structural and database partition isolation. Defines the billing tier boundary and root profile settings (e.g. name, custom tenant logo url).
+
+### user
+*   **Purpose**: Represents authenticated credentials and profile details.
+*   **Parent Entity**: `organization` (via `organization_id`).
+*   **Child Entities**: `assignment`, `comment`, `research_item`, `script_version`.
+*   **Business Responsibility**: Manages system entry credentials, secures sessions via hashed passwords, holds custom profile pictures, and logs active participation metadata.
+
+### membership (Logical Entity)
+*   **Purpose**: Resolves the association between a User and their Organization role.
+*   **Parent Entity**: `organization`, `"user"`.
+*   **Child Entities**: None.
+*   **Business Responsibility**: Associates authorization contexts (e.g. roles like `ADMIN`, `MANAGER`, `CONTRIBUTOR`) and invites. In the physical V1 schema, this logical module is denormalized directly inside the `"user"` table.
+
+### brand
+*   **Purpose**: Partitioned content channel workspace.
+*   **Parent Entity**: `organization`.
+*   **Child Entities**: `content`.
+*   **Business Responsibility**: Groups related content plans (e.g. YouTube channels, specific blogs) while utilizing the organization's user base.
+
+### content
+*   **Purpose**: Core planner item card representing a publication target.
+*   **Parent Entity**: `brand`.
+*   **Child Entities**: `assignment`, `task`, `comment`, `research_item`, `script`, `asset`.
+*   **Business Responsibility**: Coordinates the creative stages (`IDEA` to `PUBLISHED`), priorities, due dates, and links related creative modules.
+
+### assignment
+*   **Purpose**: Maps creator roles to content execution cards.
+*   **Parent Entity**: `content` (via `content_id`), `"user"` (via `user_id`).
+*   **Child Entities**: None.
+*   **Business Responsibility**: Outlines team task assignments (e.g., Writer, Editor) and progress tracking (`PENDING`, `IN_PROGRESS`, `COMPLETED`).
+
+### task
+*   **Purpose**: Lightweight checklist sub-item under content cards.
+*   **Parent Entity**: `content`.
+*   **Child Entities**: None.
+*   **Business Responsibility**: Tracks execution tasks (e.g. "design thumbnail", "record audio voiceover") with a simple toggle state (`TODO`, `IN_PROGRESS`, `DONE`).
+
+### research_item
+*   **Purpose**: Reference references and AI outlines linked to content.
+*   **Parent Entity**: `content` (via `content_id`), `"user"` (via `user_id`).
+*   **Child Entities**: None.
+*   **Business Responsibility**: Integrates markdown notes, competitor links, and raw brainstorm data into the scriptwriting workflow.
+
+### script
+*   **Purpose**: Collaborative text container for content scripts.
+*   **Parent Entity**: `content`.
+*   **Child Entities**: `script_version`.
+*   **Business Responsibility**: Anchors the main script document and increments version counters.
+
+### script_version
+*   **Purpose**: Immutable version history snap record.
+*   **Parent Entity**: `script` (via `script_id`), `"user"` (via `user_id`).
+*   **Child Entities**: None.
+*   **Business Responsibility**: Captures historical drafts, tracks which editor saved the cut, and supports document rollbacks.
+
+### asset
+*   **Purpose**: Reference files registry.
+*   **Parent Entity**: `content`.
+*   **Child Entities**: None.
+*   **Business Responsibility**: Holds external storage URL endpoints (e.g. Google Drive raw files, thumbnails, final render cuts) cataloged by type.
+
+### comment
+*   **Purpose**: In-app discussion threads.
+*   **Parent Entity**: `content` (via `content_id`), `"user"` (via `user_id`).
+*   **Child Entities**: None.
+*   **Business Responsibility**: Facilitates peer review and feedback directly adjacent to the content planning details.
+
+### activity_log (activity)
+*   **Purpose**: Chronological system operations audit journal.
+*   **Parent Entity**: `organization` (via `organization_id`), `brand` (optional), `content` (optional), `"user"` (via `user_id`).
+*   **Child Entities**: None.
+*   **Business Responsibility**: Records lifecycle status changes, assignments, and structural modifications to build an audit history of the creative pipeline.
+
+---
+
+## 4. Cardinality Validation
+
+*   **Strict One-to-Many Mappings**:
+    *   `organization` to `brand` ($1:\text{Many}$): Valid. One tenant organization can contain multiple sub-brands (e.g. SLAY Media Group owns SLAY Tech and SLAY Fashion).
+    *   `brand` to `content` ($1:\text{Many}$): Valid. Each content card is owned by a single brand channel.
+    *   `content` to metadata children (`task`, `asset`, `comment`, `research_item`) ($1:\text{Many}$): Valid. Supports multiple checklist items, files, and discussion logs grouped under the content card.
+*   **Strict Many-to-One / Many-to-Many Resolvers**:
+    *   `content` $\leftrightarrow$ `"user"` (Many-to-Many): Resolved cleanly via the `assignment` join table containing context fields (`role`, `status`).
+    *   `script_version` $\leftrightarrow$ `"user"` (Many-to-One): Multiple historical version increments point to the single contributor who performed the save.
+    *   `organization` $\leftrightarrow$ `"user"` (One-to-Many in V1): A user is physically mapped to one organization. 
+*   **Design Considerations & Safety Controls**:
+    *   *No Unintended Many-to-Many Loops*: No circular reference dependencies exist in the primary data structures.
+    *   *Integrity Safeguards*: Root models (`organization`, `brand`, `content`) enforce soft deletions, while child collections (`task`, `comment`, `script_version`) utilize physical database cascade deletes (`ON DELETE CASCADE`) to prevent orphaned rows.
+
+---
+
+## 5. Architectural Review & Scalability Insights
+
+*   **Scaling Potential (Multi-Tenant User Accounts)**:
+    *   The direct link between `"user"` and `organization` in V1 restricts a user to exactly one tenant. For phase 2, migrating to a separate `membership` table will allow users (like freelance video editors) to switch between different organizations (tenants) using a single email registration.
+*   **Audit Log Partitioning**:
+    *   The `activity_log` table will accumulate rows faster than any other table. Archiving or partitioning this table using PostgreSQL range partitioning on the `created_at` timestamp will keep primary transaction speeds fast as tables scale.
+*   **Asset Management Extensions**:
+    *   V1 stores assets strictly as URLs. The schema index layout (`idx_asset_content_id`) is designed to support a future extension linking directly to cloud-native storage assets (e.g., AWS S3 keys or Google Drive file IDs) without table structural changes.
+
