@@ -1,0 +1,60 @@
+# =========================================================================
+# CreatorOps Global Spring Boot Configuration
+# =========================================================================
+
+spring:
+  application:
+    name: creatorops-backend
+
+  profiles:
+    active: default  # Default profile executes with in-memory H2 database
+
+  # -------------------------------------------------------------------------
+  # DEFAULT PROFILE CONFIGURATION (In-Memory H2 for local execution/tests)
+  # -------------------------------------------------------------------------
+  datasource:
+    url: jdbc:h2:mem:creatorops;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update  # Hibernate generates H2 tables dynamically based on Java entities
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: false  # Disabled for default H2 profile to avoid Postgres trigger/function errors
+
+---
+
+# -------------------------------------------------------------------------
+# POSTGRES PROFILE CONFIGURATION (Production/Real DB integration)
+# -------------------------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: postgres
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:creatorops}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate  # Hibernate only validates matching schemas on startup
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    enabled: true  # Flyway runs initial V1 DDL migration script on startup
+    baseline-on-migrate: true

@@ -1,0 +1,99 @@
+# CreatorOps - Content Operations Platform
+
+[![Java Version](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/technologies/downloads/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Ember.js](https://img.shields.io/badge/Ember-Octane-blue.svg)](https://emberjs.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+CreatorOps is a production-grade Content Operations Platform (SaaS) built to help modern content creator teams centralize their workflow from initial brainstorming to multi-channel publishing and analytics. It serves as a unified workspace replacing fragmented tools like WhatsApp, Google Docs, Notion, Trello, and spreadsheets.
+
+---
+
+## 🌟 Product Overview
+
+For content creator teams (e.g., SLAY Media) running multiple media brands (e.g., SLAY Fashion, SLAY Fitness, SLAY Tech), managing the production lifecycle is notoriously scattered. Ideas are lost in chat threads, scripts are spread across Google Drives, feedback is chaotic, and analytics are manually aggregated.
+
+**CreatorOps** centralizes the content engine:
+*   **Organization & Brand Tenancy**: Hierarchical control over multiple brands under one organization.
+*   **Structured Content Lifecycle**: Unified workflow tracking content from `IDEA` to `PUBLISHED`.
+*   **Integrated Script & Research Modules**: In-app writing, version control, reference gathering, and AI assistant tools (powered by Google Gemini).
+*   **Task & Assignment Engines**: Multi-contributor assignments per content phase, with granular sub-tasks.
+*   **Activity Auditing & Timeline**: Complete chronological history of all updates.
+*   **Centralized Analytics**: Insights across organizations, brands, and individual contributor performance.
+
+---
+
+## 🛠️ Technology Stack
+
+CreatorOps is architected with a strict separation of concerns, employing a robust Java/Spring backend and a component-driven TypeScript frontend.
+
+### Backend (Backend-First Architecture)
+*   **Core Framework**: Java 21 & Spring Boot 3.x
+*   **Security**: Spring Security 6 (Stateless JWT, RBAC)
+*   **Database**: PostgreSQL 16
+*   **Database Migrations**: Flyway
+*   **Build Tool**: Maven
+
+### Frontend
+*   **Framework**: Ember.js Octane (v5.x)
+*   **Language**: TypeScript
+*   **Styling**: Tailwind CSS (Utility-first, dark-mode prioritized UI)
+
+### AI Brainstorming & Generation
+*   **AI Gateway**: Provider Abstraction Layer
+*   **LLM Engine**: Google Gemini (primary), with extensible adapters for OpenAI, Claude, and Ollama.
+
+---
+
+## 🏗️ Architecture Highlights
+
+```mermaid
+graph TD
+    User([Creator Team User]) -->|HTTPS| Frontend[Ember.js Octane SPA]
+    Frontend -->|REST API + JWT| API_Gateway[Spring Boot API / Security]
+    
+    subgraph Backend [Spring Boot Backend Application]
+        API_Gateway --> Controllers[Rest Controllers]
+        Controllers --> Services[Domain Services]
+        Services --> Repositories[JPA Repositories]
+        Services --> AI_Gateway[AI Provider Gateway]
+    end
+    
+    Repositories -->|JDBC| PostgreSQL[(PostgreSQL Database)]
+    AI_Gateway -->|SDK/REST| GeminiAPI[Google Gemini API]
+    AI_Gateway -.->|Future| OtherLLMs[OpenAI / Claude / Ollama]
+```
+
+### Key Architectural Guidelines
+1.  **Multi-Tenancy Hierarchy**: Direct mapping of `Organization` $\rightarrow$ `Brand` $\rightarrow$ `Content`.
+2.  **Stateless API**: Backend is a stateless REST API secured via JSON Web Tokens (JWT).
+3.  **Pluggable AI Integration**: An abstraction layer decouples core business logic from specific AI provider SDKs, enabling seamless fallback and multi-model routing.
+4.  **Database Integrity**: Strict conventions including BIGINT primary keys, UTC timestamp storage (`TIMESTAMPTZ`), VARCHAR-based enum serialization, and transactional safety.
+
+---
+
+## 📂 Documentation Catalog
+
+We maintain clean, detailed architecture and product specifications to guide development. Click the links below to explore the documentation:
+
+*   📖 **[Product Requirements Document](file:///S:/Dev/creatorOps/docs/product-requirements.md)**: Product vision, user personas, comprehensive feature specs, lifecycle state transitions, and RBAC matrix.
+*   📐 **[System Architecture](file:///S:/Dev/creatorOps/docs/architecture.md)**: Details on C4 diagrams, backend service decomposition, frontend module design, and the AI provider gateway abstraction.
+*   🗄️ **[Database Schema Design](file:///S:/Dev/creatorOps/docs/database-design.md)**: ER Diagram, full entity dictionary, soft delete logic, indexing strategy, and auditing design.
+*   🔌 **[API Design Specification](file:///S:/Dev/creatorOps/docs/api-design.md)**: REST endpoint catalog, payload definitions, global error responses, filtering, sorting, and pagination rules.
+*   📝 **[Architecture Decision Records (ADR)](file:///S:/Dev/creatorOps/docs/decisions.md)**: Documented architectural decisions, tradeoffs, and accepted designs.
+
+---
+
+## 📈 Project Status
+
+- [x] Documentation & Architecture Phase (Completed)
+- [ ] Backend Infrastructure Setup (Spring Boot, Security, PostgreSQL)
+- [ ] Database Schema Migrations (Flyway)
+- [ ] AI Integration Layer
+- [ ] Core REST APIs
+- [ ] Frontend Workspace Initialization (Ember Octane + TypeScript)
+- [ ] Component & UI Shell Layout
+- [ ] Core Workspace Integrations
+- [ ] End-to-End Testing & Deployment
+
+For deployment guides and local development setup instructions, see the upcoming instructions in the wiki (coming soon).

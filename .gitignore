@@ -1,0 +1,103 @@
+# =========================================================================
+# CreatorOps - Git Ignore Rules
+# =========================================================================
+
+# -------------------------------------------------------------------------
+# 1. Build and Dependency Directories (Maven/Java)
+# -------------------------------------------------------------------------
+# Prevents committing compiled classes, packaged JARs/WARs, and local target folder outputs.
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# -------------------------------------------------------------------------
+# 2. IDE and Editor Configuration Files
+# -------------------------------------------------------------------------
+# Excludes local editor/IDE workspaces, configurations, and cache files to
+# keep team developer environment settings isolated.
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea_modules/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.code-workspace
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nb-configuration.xml
+.nb-gradle/
+
+# Eclipse
+.metadata
+.classpath
+.project
+.settings/
+*.launch
+.factorypath
+
+# -------------------------------------------------------------------------
+# 3. Log Files and Runtime Outputs
+# -------------------------------------------------------------------------
+# Prevents local runtime log files from being tracked in source control.
+*.log
+logs/
+temp/
+tmp/
+
+# -------------------------------------------------------------------------
+# 4. OS-Specific System Files
+# -------------------------------------------------------------------------
+# Excludes system metadata files generated automatically by operating systems.
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# -------------------------------------------------------------------------
+# 5. Environment and Secrets (Local Configurations)
+# -------------------------------------------------------------------------
+# CRITICAL: Excludes local environment files, credential stores, and API secrets.
+.env
+.env.local
+.env.*.local
+*.env
+*.properties.local
+application-local.yml
+application-local.properties
