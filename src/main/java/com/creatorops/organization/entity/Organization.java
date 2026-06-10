@@ -4,12 +4,12 @@ import com.creatorops.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "organization")
 @SQLDelete(sql = "UPDATE organization SET is_deleted = true, deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
-@Where(clause = "is_deleted = false")
+@SQLRestriction("is_deleted = false")
 public class Organization extends BaseEntity {
 
     @Id
