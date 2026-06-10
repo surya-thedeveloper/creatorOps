@@ -48,4 +48,16 @@ public class AuthController {
         UserResponse response = authService.getCurrentUser(email);
         return ResponseEntity.ok(ApiResponse.success(response, "Current user retrieved successfully"));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.initiatePasswordReset(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset token has been generated successfully"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password has been reset successfully"));
+    }
 }

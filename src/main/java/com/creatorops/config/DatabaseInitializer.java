@@ -25,11 +25,11 @@ public class DatabaseInitializer implements CommandLineRunner {
             try {
                 // Attempt to insert a default organization for PostgreSQL V1 DDL references.
                 Integer count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM organization WHERE id = 1", Integer.class);
+                    "SELECT COUNT(*) FROM organization", Integer.class);
                 if (count != null && count == 0) {
                     jdbcTemplate.execute(
-                        "INSERT INTO organization (id, name, created_at, updated_at, is_deleted) " +
-                        "VALUES (1, 'Default Organization', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, false)");
+                        "INSERT INTO organization (name, created_at, updated_at, is_deleted) " +
+                        "VALUES ('Default Organization', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, false)");
                 }
             } catch (Exception e) {
                 // Ignore failures (e.g. when table is missing under H2 default profile)

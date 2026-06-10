@@ -179,6 +179,76 @@ When executing a coding task, the implementing AI agent **must** append a copy o
 *   **Architecture & Performance Impact**: Documentation-only alignment; clarifies V1 schema relationships and deferred multi-tenant membership patterns.
 *   **Follow-up Work**: Proceed to implement authentication or organization modules in future milestones.
 
+---
+
+### 2026-06-08 Organization Module & User Roles Integration
+
+*   **Task Description**: Implemented the Organization module, converted user roles to a clean JPA enum, linked User to Organization via a `@ManyToOne` association, enabled global method security, and verified tenant isolation scopes.
+*   **Files Modified**:
+    *   [MODIFY] [src/main/java/com/creatorops/auth/entity/User.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/entity/User.java)
+    *   [MODIFY] [src/main/java/com/creatorops/auth/dto/UserResponse.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/dto/UserResponse.java)
+    *   [MODIFY] [src/main/java/com/creatorops/auth/security/JwtService.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/security/JwtService.java)
+    *   [MODIFY] [src/main/java/com/creatorops/auth/service/AuthServiceImpl.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/service/AuthServiceImpl.java)
+    *   [MODIFY] [src/main/java/com/creatorops/config/SecurityConfig.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/config/SecurityConfig.java)
+    *   [MODIFY] [src/main/java/com/creatorops/config/DatabaseInitializer.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/config/DatabaseInitializer.java)
+    *   [MODIFY] [src/main/java/com/creatorops/common/exception/GlobalExceptionHandler.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/common/exception/GlobalExceptionHandler.java)
+    *   [MODIFY] [src/test/java/com/creatorops/auth/AuthServiceTests.java](file:///s:/Dev/creatorOps/src/test/java/com/creatorops/auth/AuthServiceTests.java)
+    *   [MODIFY] [src/test/java/com/creatorops/auth/SecurityFlowTests.java](file:///s:/Dev/creatorOps/src/test/java/com/creatorops/auth/SecurityFlowTests.java)
+    *   [NEW] [src/main/java/com/creatorops/auth/entity/UserRole.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/entity/UserRole.java)
+    *   [NEW] [src/main/java/com/creatorops/organization/entity/Organization.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/organization/entity/Organization.java)
+    *   [NEW] [src/main/java/com/creatorops/organization/repository/OrganizationRepository.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/organization/repository/OrganizationRepository.java)
+    *   [NEW] [src/main/java/com/creatorops/organization/dto/OrganizationRequest.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/organization/dto/OrganizationRequest.java)
+    *   [NEW] [src/main/java/com/creatorops/organization/dto/OrganizationResponse.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/organization/dto/OrganizationResponse.java)
+    *   [NEW] [src/main/java/com/creatorops/organization/service/OrganizationService.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/organization/service/OrganizationService.java)
+    *   [NEW] [src/main/java/com/creatorops/organization/service/OrganizationServiceImpl.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/organization/service/OrganizationServiceImpl.java)
+    *   [NEW] [src/main/java/com/creatorops/organization/controller/OrganizationController.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/organization/controller/OrganizationController.java)
+    *   [NEW] [src/test/java/com/creatorops/organization/OrganizationControllerTests.java](file:///s:/Dev/creatorOps/src/test/java/com/creatorops/organization/OrganizationControllerTests.java)
+*   **Implementation Summary**:
+    *   Implemented full `Organization` entity with soft deletion support filtering active database lookups via `@SQLDelete` and `@Where`.
+    *   Refactored `User` entity to reference `Organization` via `@ManyToOne` mapping and user roles as `UserRole` enum.
+    *   Enabled method-level RBAC check gates (`@EnableMethodSecurity`, `@PreAuthorize`) in `SecurityConfig.java` and updated JWT claims to match `"orgId"` and `"role"` specs.
+    *   Integrated service-level verification to validate tenant limits, throwing Spring `AccessDeniedException` if users cross organization scopes.
+    *   Created `OrganizationController` mapping `/api/organizations` endpoints (POST, PUT, DELETE) restricted to `ADMIN` users.
+    *   Constructed a mock-based test suite (`OrganizationControllerTests.java`) validating CRUD operations, role checks, and tenant isolation, and updated existing AuthService and MockMvc security flow tests.
+*   **Architecture & Performance Impact**:
+    *   Restricts updates and deletions to the current user's organization scope.
+    *   Enables standard RFC 7807 error formats for security-related access failures.
+*   **Follow-up Work**: Proceed to implement the Brand Management module in the next milestone.
+
+---
+
+### 2026-06-10 User Profile Settings & Password Recovery
+
+*   **Task Description**: Implemented user profile settings CRUD, secure password changes, and forgot password token recovery flows.
+*   **Files Modified**:
+    *   [MODIFY] [User.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/entity/User.java)
+    *   [MODIFY] [UserRepository.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/repository/UserRepository.java)
+    *   [MODIFY] [AuthService.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/service/AuthService.java)
+    *   [MODIFY] [AuthServiceImpl.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/service/AuthServiceImpl.java)
+    *   [MODIFY] [AuthController.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/controller/AuthController.java)
+    *   [MODIFY] [SecurityConfig.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/config/SecurityConfig.java)
+    *   [MODIFY] [AuthServiceTests.java](file:///s:/Dev/creatorOps/src/test/java/com/creatorops/auth/AuthServiceTests.java)
+    *   [MODIFY] [AI_IMPLEMENTATION_LOG.md](file:///s:/Dev/creatorOps/AI_IMPLEMENTATION_LOG.md)
+*   **Files Created**:
+    *   [NEW] [V2__add_user_password_reset.sql](file:///s:/Dev/creatorOps/src/main/resources/db/migration/V2__add_user_password_reset.sql)
+    *   [NEW] [ForgotPasswordRequest.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/dto/ForgotPasswordRequest.java)
+    *   [NEW] [ResetPasswordRequest.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/dto/ResetPasswordRequest.java)
+    *   [NEW] [ChangePasswordRequest.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/dto/ChangePasswordRequest.java)
+    *   [NEW] [UpdateProfileRequest.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/dto/UpdateProfileRequest.java)
+    *   [NEW] [UserController.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/auth/controller/UserController.java)
+    *   [NEW] [UserControllerTests.java](file:///s:/Dev/creatorOps/src/test/java/com/creatorops/auth/UserControllerTests.java)
+*   **Implementation Summary**:
+    *   Created `V2` database migration to add `password_reset_token` and `password_reset_expiry` to the `"user"` table.
+    *   Updated the `User` entity and repository to support token lookup and expiration validation.
+    *   Exposed public REST endpoints for forgot password (`/api/auth/forgot-password`) and reset password (`/api/auth/reset-password`).
+    *   Created `UserController` exposing `/api/users/profile` and `/api/users/change-password` requiring valid JWT authentication.
+    *   Wrote extensive unit and integration tests covering recovery tokens, profile modifications, and validation/unauthorized behaviors.
+*   **Architecture & Performance Impact**:
+    *   Exposes secure profile updates without relying on manual database modifications.
+    *   Minimizes username enumeration risks during password resets by returning generic success responses.
+*   **Follow-up Work**: Proceed to implement Brand Management or Content modules.
+
+
 
 
 

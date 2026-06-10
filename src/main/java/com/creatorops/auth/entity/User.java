@@ -1,6 +1,7 @@
 package com.creatorops.auth.entity;
 
 import com.creatorops.common.entity.BaseEntity;
+import com.creatorops.organization.entity.Organization;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,14 +26,23 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private String role = "ADMIN"; // Default to ADMIN for V1 compatibility
+    private UserRole role = UserRole.ADMIN; // Default to ADMIN for compatibility
 
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "organization_id", nullable = false)
-    private Long organizationId = 1L; // Defaults to 1 for V1 DDL constraints integrity
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
+
+    @Column(name = "password_reset_token")
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_expiry")
+    private java.time.Instant passwordResetExpiry;
+
 
     // Constructors
     public User() {}
@@ -76,11 +86,11 @@ public class User extends BaseEntity implements UserDetails {
         this.passwordHash = passwordHash;
     }
 
-    public String getRole() {
+    public UserRole getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(UserRole role) {
         this.role = role;
     }
 
@@ -92,18 +102,39 @@ public class User extends BaseEntity implements UserDetails {
         this.imageUrl = imageUrl;
     }
 
-    public Long getOrganizationId() {
-        return organizationId;
+    public Organization getOrganization() {
+        return organization;
     }
 
-    public void setOrganizationId(Long organizationId) {
-        this.organizationId = organizationId;
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
+
+    public Long getOrganizationId() {
+        return organization != null ? organization.getId() : null;
+    }
+
+    public String getPasswordResetToken() {
+        return passwordResetToken;
+    }
+
+    public void setPasswordResetToken(String passwordResetToken) {
+        this.passwordResetToken = passwordResetToken;
+    }
+
+    public java.time.Instant getPasswordResetExpiry() {
+        return passwordResetExpiry;
+    }
+
+    public void setPasswordResetExpiry(java.time.Instant passwordResetExpiry) {
+        this.passwordResetExpiry = passwordResetExpiry;
+    }
+
 
     // UserDetails implementations
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override
@@ -136,3 +167,4 @@ public class User extends BaseEntity implements UserDetails {
         return true;
     }
 }
+

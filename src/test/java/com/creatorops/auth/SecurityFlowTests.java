@@ -42,8 +42,12 @@ class SecurityFlowTests {
 
     @Test
     void protectedMeEndpoint_ValidToken_ReturnsSuccess() throws Exception {
+        com.creatorops.organization.entity.Organization organization = new com.creatorops.organization.entity.Organization("Default Organization", null);
+        organization.setId(1L);
         User user = new User("Surya", "surya@example.com", "hashed_password");
         user.setId(1L);
+        user.setRole(com.creatorops.auth.entity.UserRole.ADMIN);
+        user.setOrganization(organization);
 
         when(jwtService.extractUsername(anyString())).thenReturn("surya@example.com");
         when(jwtService.isTokenValid(anyString(), anyString())).thenReturn(true);
