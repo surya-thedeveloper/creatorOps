@@ -61,6 +61,10 @@ public class ContentServiceImpl implements ContentService {
         User user = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        if (user.getRole() == com.creatorops.auth.entity.UserRole.CONTRIBUTOR) {
+            throw new AccessDeniedException("Access denied: Contributors cannot perform this action.");
+        }
+
         Brand brand = brandRepository.findById(request.brandId())
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.brandId()));
 
@@ -124,6 +128,10 @@ public class ContentServiceImpl implements ContentService {
         User user = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        if (user.getRole() == com.creatorops.auth.entity.UserRole.CONTRIBUTOR) {
+            throw new AccessDeniedException("Access denied: Contributors cannot perform this action.");
+        }
+
         Content content = contentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Content not found with id: " + id));
 
@@ -156,6 +164,10 @@ public class ContentServiceImpl implements ContentService {
     public void deleteContent(Long id, String currentUserEmail) {
         User user = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getRole() == com.creatorops.auth.entity.UserRole.CONTRIBUTOR) {
+            throw new AccessDeniedException("Access denied: Contributors cannot perform this action.");
+        }
 
         Content content = contentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Content not found with id: " + id));

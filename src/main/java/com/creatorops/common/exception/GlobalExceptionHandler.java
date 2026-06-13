@@ -52,6 +52,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMessageNotReadableException(
+            org.springframework.http.converter.HttpMessageNotReadableException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                OffsetDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                "Malformed JSON request or invalid parameters: " + ex.getMostSpecificCause().getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                null
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(com.creatorops.auth.exception.UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(
             com.creatorops.auth.exception.UserAlreadyExistsException ex, WebRequest request) {

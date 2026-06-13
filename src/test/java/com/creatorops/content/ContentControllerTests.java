@@ -263,4 +263,58 @@ class ContentControllerTests {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void createContent_CrossTenantForbidden() throws Exception {
+        mockAuth(managerUser);
+        when(contentService.createContent(eq("rogers@slay.com"), any(ContentRequest.class)))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Cannot create content for a brand outside your organization."));
+
+        mockMvc.perform(post("/api/contents")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(contentRequest)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.message").value("Access denied: Cannot create content for a brand outside your organization."));
+    }
+
+    @Test
+    void getContentById_CrossTenantForbidden() throws Exception {
+        mockAuth(contributorUser);
+        when(contentService.getContentById(eq(42L), eq("bruce@slay.com")))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Cannot view content outside your organization."));
+
+        mockMvc.perform(get("/api/contents/42")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
+    }
+
+    @Test
+    void createContent_MalformedEnumJson() throws Exception {
+        mockAuth(adminUser);
+        String malformedJson = """
+            {
+                "brandId": 5,
+                "title": "Title",
+                "type": "BLOG",
+                "stage": "INVALID_STAGE",
+                "priority": "MEDIUM"
+            }
+            """;
+
+        mockMvc.perform(post("/api/contents")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(malformedJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Malformed JSON request or invalid parameters")));
+    }
 }
+
