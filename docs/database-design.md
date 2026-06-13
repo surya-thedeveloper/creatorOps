@@ -120,6 +120,7 @@ erDiagram
         bigint content_id FK
         bigint user_id FK
         varchar type
+        varchar title
         text content
         varchar url
         timestamptz created_at
@@ -267,6 +268,7 @@ Research notes, outlines, or URL links linked to content.
 *   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Not Null, Cascade Delete.
 *   `user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
 *   `type`: `VARCHAR(50)`, Not Null (Enum values: `NOTE`, `LINK`, `AI_BRAINSTORM`).
+*   `title`: `VARCHAR(255)`, Not Null.
 *   `content`: `TEXT`, Null (Required for `NOTE` & `AI_BRAINSTORM`).
 *   `url`: `VARCHAR(1024)`, Null (Required for `LINK`).
 *   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.

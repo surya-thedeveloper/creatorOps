@@ -347,4 +347,36 @@ When executing a coding task, the implementing AI agent **must** append a copy o
     *   Refined API error handling compliance matching RFC 7807/ErrorResponse criteria.
 *   **Follow-up Work**: Content Module V1 is fully approved. Next approved milestones are the Research Module or Script Module implementation.
 
+---
+
+### 2026-06-13 Research Module (V1) Implementation
+
+*   **Task Description**: Implemented the Research Module (V1) for CreatorOps, allowing teams to collect and organize research cards (notes, links, brainstorm outlines) linked to content cards, while securing tenant isolation boundaries.
+*   **Files Modified**:
+    *   [MODIFY] [database-design.md](file:///s:/Dev/creatorOps/docs/database-design.md)
+    *   [MODIFY] [AI_IMPLEMENTATION_LOG.md](file:///s:/Dev/creatorOps/AI_IMPLEMENTATION_LOG.md)
+*   **Files Created**:
+    *   [NEW] [V3__add_title_to_research_item.sql](file:///s:/Dev/creatorOps/src/main/resources/db/migration/V3__add_title_to_research_item.sql)
+    *   [NEW] [ResearchItemType.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/entity/ResearchItemType.java)
+    *   [NEW] [ResearchItem.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/entity/ResearchItem.java)
+    *   [NEW] [ResearchItemRequest.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/dto/ResearchItemRequest.java)
+    *   [NEW] [ResearchItemResponse.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/dto/ResearchItemResponse.java)
+    *   [NEW] [ResearchItemValid.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/dto/ResearchItemValid.java)
+    *   [NEW] [ResearchItemValidator.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/dto/ResearchItemValidator.java)
+    *   [NEW] [ResearchItemRepository.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/repository/ResearchItemRepository.java)
+    *   [NEW] [ResearchItemService.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/service/ResearchItemService.java)
+    *   [NEW] [ResearchItemServiceImpl.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/service/ResearchItemServiceImpl.java)
+    *   [NEW] [ResearchItemController.java](file:///s:/Dev/creatorOps/src/main/java/com/creatorops/research/controller/ResearchItemController.java)
+    *   [NEW] [ResearchItemControllerTests.java](file:///s:/Dev/creatorOps/src/test/java/com/creatorops/research/ResearchItemControllerTests.java)
+*   **Implementation Summary**:
+    *   *Database DDL Migration*: Created Flyway script adding `title` field to the `research_item` table. Updated physical ERD/dictionary in `database-design.md`.
+    *   *JPA Mapping & Entity*: Mapped `ResearchItem` extending `BaseEntity` to maintain auditing context. Configured lazy fetch relationships to avoid N+1 issues when reading associated `Content` and `User` instances.
+    *   *Conditional Validation*: Added class-level constraint validator checking that `NOTE` and `AI_BRAINSTORM` cards possess `content` text, while `LINK` cards possess an `externalUrl`.
+    *   *Tenant Isolation*: Structured queries and service authorization controls verifying that write, read, update, or delete commands are strictly scoped within the caller's organization.
+    *   *Endpoints*: Configured REST endpoints (`POST /api/contents/{contentId}/research`, `GET /api/research/{id}`, `GET /api/contents/{contentId}/research`, `PUT /api/research/{id}`, `DELETE /api/research/{id}`).
+*   **Architecture & Performance Impact**:
+    *   Tenant boundary rules are evaluated at the transactional service boundary.
+    *   Cascade deletes are set up at the DB level, cleanly pruning children `research_item` rows when parent `content` is soft/hard deleted.
+*   **Follow-up Work**: Proceed to implement Script Module V1 based on hybrid editing design conventions.
+
 
