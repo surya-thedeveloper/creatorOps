@@ -33,8 +33,7 @@ erDiagram
     USER ||--o{ ASSIGNMENT : performs
     USER ||--o{ COMMENT : writes
     USER ||--o{ RESEARCH_ITEM : contributes
-    USER ||--o{ SCRIPT_VERSION : saves
-    SCRIPT ||--o{ SCRIPT_VERSION : catalogs
+    USER ||--o{ SCRIPT : writes
     ORGANIZATION ||--o{ ACTIVITY_LOG : archives
     
     ORGANIZATION {
@@ -130,23 +129,15 @@ erDiagram
     SCRIPT {
         bigint id PK
         bigint content_id FK
-        integer current_version
+        integer version
         varchar document_type
         text generated_script
         text editor_content
         varchar external_document_url
         varchar uploaded_file_reference
+        bigint user_id FK
         timestamptz created_at
         timestamptz updated_at
-    }
-
-    SCRIPT_VERSION {
-        bigint id PK
-        bigint script_id FK
-        bigint user_id FK
-        integer version_number
-        text content
-        timestamptz created_at
     }
 
     ASSET {
@@ -275,26 +266,18 @@ Research notes, outlines, or URL links linked to content.
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
 #### `script`
-Container tracking script status, workspace options, and content versions on a content card.
+Container tracking script versions, rich text, and external references on a content card.
 *   `id`: `BIGINT`, Primary Key, Auto-increment.
 *   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Not Null, Cascade Delete.
-*   `current_version`: `INTEGER`, Not Null, Default `1`.
-*   `document_type`: `VARCHAR(50)`, Not Null, Default `'INTERNAL'`. Enum values: `INTERNAL`, `GOOGLE_DOCS`, `MICROSOFT_WORD_ONLINE`, `UPLOADED_DOC`. Indicates the active script workspace workflow chosen by the user.
-*   `generated_script`: `TEXT`, Null. Storing the initial AI script draft generated from research inputs (Notes, Links, Brainstorm). Used as a baseline for Script Version 1.
-*   `editor_content`: `TEXT`, Null. Storing the editor content of the script when edited internally within the basic rich-text editor.
+*   `version`: `INTEGER`, Not Null.
+*   `document_type`: `VARCHAR(50)`, Not Null, Default `'INTERNAL'`. Enum values: `INTERNAL`, `GOOGLE_DOC`, `MS_WORD`, `UPLOADED_FILE`. Indicates the active script workspace workflow chosen by the user.
+*   `generated_script`: `TEXT`, Null. Storing the initial AI script draft generated from research inputs.
+*   `editor_content`: `TEXT`, Null. Storing the editor content of the script when edited internally.
 *   `external_document_url`: `VARCHAR(1024)`, Null. Stores the URL reference to the external document (e.g. Google Docs or Microsoft Word Online).
-*   `uploaded_file_reference`: `VARCHAR(1024)`, Null. Stores the file name/path reference for uploaded script files (e.g. `.docx` files).
+*   `uploaded_file_reference`: `VARCHAR(1024)`, Null. Stores the file name/path reference for uploaded script files.
+*   `user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
 *   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
-
-#### `script_version`
-Version history catalog containing historical scripts.
-*   `id`: `BIGINT`, Primary Key, Auto-increment.
-*   `script_id`: `BIGINT`, Foreign Key references `script(id)`, Not Null, Cascade Delete.
-*   `user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
-*   `version_number`: `INTEGER`, Not Null.
-*   `content`: `TEXT`, Not Null.
-*   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
 #### `asset`
 Phase 1 asset manager (URL reference repository).
@@ -342,7 +325,7 @@ When deleting these records:
 The following supporting metadata entities are **hard deleted** (physical deletion from disk):
 *   `task`
 *   `comment`
-*   `script` / `script_version`
+*   `script`
 *   `asset`
 *   `activity_log`
 *   `research_item`
@@ -368,7 +351,7 @@ Database constraints protect data integrity but do not automatically add lookup 
 *   `comment(content_id)`
 *   `research_item(content_id)`
 *   `script(content_id)`
-*   `script_version(script_id)`
+*   `script(user_id)`
 *   `asset(content_id)`
 *   `activity_log(organization_id)`, `activity_log(content_id)`
 
@@ -470,16 +453,10 @@ erDiagram
 *   **Business Responsibility**: Integrates markdown notes, competitor links, and raw brainstorm data into the scriptwriting workflow.
 
 ### script
-*   **Purpose**: Collaborative text container for content scripts.
-*   **Parent Entity**: `content`.
-*   **Child Entities**: `script_version`.
-*   **Business Responsibility**: Anchors the main script document and increments version counters.
-
-### script_version
-*   **Purpose**: Immutable version history snap record.
-*   **Parent Entity**: `script` (via `script_id`), `"user"` (via `user_id`).
+*   **Purpose**: Collaborative text container representing script draft versions.
+*   **Parent Entity**: `content` (via `content_id`), `"user"` (via `user_id`).
 *   **Child Entities**: None.
-*   **Business Responsibility**: Captures historical drafts, tracks which editor saved the cut, and supports document rollbacks.
+*   **Business Responsibility**: Anchors the script version details (internal rich-text or external document references) and user/auditing context.
 
 ### asset
 *   **Purpose**: Reference files registry.
@@ -509,11 +486,11 @@ erDiagram
     *   `content` to metadata children (`task`, `asset`, `comment`, `research_item`) ($1:\text{Many}$): Valid. Supports multiple checklist items, files, and discussion logs grouped under the content card.
 *   **Strict Many-to-One / Many-to-Many Resolvers**:
     *   `content` $\leftrightarrow$ `"user"` (Many-to-Many): Resolved cleanly via the `assignment` join table containing context fields (`role`, `status`).
-    *   `script_version` $\leftrightarrow$ `"user"` (Many-to-One): Multiple historical version increments point to the single contributor who performed the save.
+    *   `script` $\leftrightarrow$ `"user"` (Many-to-One): Multiple script versions point to the user contributor who performed the save.
     *   `organization` $\leftrightarrow$ `"user"` (One-to-Many in V1): A user is physically mapped to one organization. 
 *   **Design Considerations & Safety Controls**:
     *   *No Unintended Many-to-Many Loops*: No circular reference dependencies exist in the primary data structures.
-    *   *Integrity Safeguards*: Root models (`organization`, `brand`, `content`) enforce soft deletions, while child collections (`task`, `comment`, `script_version`) utilize physical database cascade deletes (`ON DELETE CASCADE`) to prevent orphaned rows.
+    *   *Integrity Safeguards*: Root models (`organization`, `brand`, `content`) enforce soft deletions, while child collections (`task`, `comment`, `script`) utilize physical database cascade deletes (`ON DELETE CASCADE`) to prevent orphaned rows.
 
 ---
 
