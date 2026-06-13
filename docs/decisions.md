@@ -13,6 +13,7 @@ This document catalogs the key architectural decisions, context, trade-offs, and
 5.  **[ADR-005: Store Enums as VARCHAR in PostgreSQL](#adr-005-store-enums-as-varchar-in-postgresql)**
 6.  **[ADR-006: Method-Level RBAC with Spring Security](#adr-006-method-level-rbac-with-spring-security)**
 7.  **[ADR-007: Interface-Based AI Provider Abstraction Gateway](#adr-007-interface-based-ai-provider-abstraction-gateway)**
+8.  **[ADR-008: Hybrid Script Editing Strategy](#adr-008-hybrid-script-editing-strategy)**
 
 ---
 
@@ -171,3 +172,28 @@ We will define an interface-driven gateway pattern (`AiProviderGateway`). All sc
     *   Supports unit testing by allowing developers to mock the AI provider with static responses.
 *   **Cons**:
     *   Standardizing request and response models across providers can be complex, as different engines return data in different shapes (e.g., function calling schemas).
+
+---
+
+## ADR-008: Hybrid Script Editing Strategy
+
+### Status
+Accepted
+
+### Context
+Creator teams use different tools and have varied preferences for scriptwriting workflows. Forcing creators to migrate entirely to a new in-app editor causes high friction, while relying solely on external tools fragments content status tracking and separates script drafts from research inputs and stage flows.
+
+### Decision
+We will support a hybrid script editing strategy within the Script Workspace:
+1. **Internal Editor**: Provide a basic rich-text editor (supporting Headings, Bold, Italic, Underline, Bullet/Numbered Lists) directly in CreatorOps.
+2. **External Pointers**: Allow users to configure external document links (Google Docs, Microsoft Word Online) or upload document files (`.docx`) to act as the source of truth reference.
+3. **AI Draft Generation**: Build a unified AI generator that parses research items (Notes, Links, AI Brainstorm items) to produce a baseline draft (Version 1) available for copying or direct editing.
+
+### Consequences
+*   **Pros**:
+    *   Accommodates diverse workflow preferences, ensuring rapid adoption and low friction.
+    *   Allows teams to utilize Google Docs or MS Word features without losing status tracking in CreatorOps.
+    *   Keeps initial database schema simple by storing links/file references rather than complex real-time collaboration states.
+*   **Cons**:
+    *   Does not support automatic bi-directional document sync or live multi-user collaborative editing inside CreatorOps in Phase 1 (deferred to future phases).
+    *   Requires users to manually copy/paste drafts if they choose external editors without active API syncs.

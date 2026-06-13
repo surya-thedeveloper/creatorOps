@@ -73,6 +73,30 @@ To maintain a strict direction of dependency:
 2.  **Service Layer (`*Service.java`, `*ServiceImpl.java`)**: Transaction boundaries (`@Transactional`), domain validation, business rules, and state machine triggers.
 3.  **Persistence Layer (`*Entity.java`, `*Repository.java`)**: JPA mapping to PostgreSQL, custom QueryDSL or JPA query definitions.
 
+### 2.3. Research & Scripting Engine Architecture
+The Research and Script modules coordinate to move a content card from information gathering to the physical text workspace.
+
+#### Research-to-Script Data Flow
+```mermaid
+graph TD
+    ContentCard[Content Card] --> ResearchStarted[Research Stage]
+    ResearchStarted --> Notes[Gather Notes: Observations, Competitor Insights]
+    ResearchStarted --> Links[Gather Links: YT, Instagram, Reddit, References]
+    ResearchStarted --> AI_Brainstorm[Generate AI Brainstorm: Hook Angles, Structures]
+    Notes & Links & AI_Brainstorm --> ResearchComplete[Mark Research Completed]
+    ResearchComplete --> MoveToScript[Transition to Script Stage]
+    MoveToScript --> AIScriptGen[AI Script Generation: Compile notes, links, outlines]
+    AIScriptGen --> DraftV1[Initial Script Version 1.0]
+    DraftV1 --> Workspace[Script Workspace: Hybrid Editing Strategy]
+```
+
+#### Architecture Responsibilities
+*   **Research Module (`com.creatorops.research`)**: Acts as a contextual information compiler associated with specific Content cards. It is **not** a general knowledge wiki replacement. It organizes notes (`NOTE`), competitor references (`LINK`), and prompt outline recommendations (`AI_BRAINSTORM`).
+*   **Script Module (`com.creatorops.script`)**: Focuses on text generation, draft storage, and versioning snapshots. It runs after the research stage is marked completed.
+*   **Hybrid Workspace Architecture**: The Script Workspace accommodates two editing pathways to minimize workflow restrictions:
+    1.  *Internal Editor (Basic Rich Text)*: Web application components rendering custom rich text attributes (headings, bold, italic, underline, bullet lists, numbered lists). State is persisted in `script_version.content` table snapshots.
+    2.  *External Document Pointer (Reference)*: Mapped in the metadata, storing copy-paste references to external platforms (Google Docs URLs, Microsoft Word Online URLs) or local file uploads (`.docx` storage paths). No automatic API document synchronization or OAuth overhead in Phase 1 (explicitly deferred to future phases).
+
 ---
 
 ## 3. Frontend Architecture (Ember.js Octane)

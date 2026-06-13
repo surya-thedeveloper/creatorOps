@@ -77,19 +77,28 @@ CreatorOps operates with a strict, hierarchical role system. Every user is mappe
 *   **Filtering & Sorting**: Ability to filter by Brand, Stage, Type, Assignee, and Sort by Due Date or Priority.
 
 ### 5.3. Research Module
-*   **Research Items**: Belong to a specific Content card.
-*   **Types**:
-    *   `NOTE`: Simple rich-text annotations.
-    *   `LINK`: URLs to references (competitor videos, blog posts, articles) with metadata fetch capability.
-    *   `AI_BRAINSTORM`: Ideas, outlines, and titles generated via AI models.
+*   **Purpose**: The Research Module helps creator teams gather and organize references required for content creation. It is attached directly to a Content card and is **not** designed to act as a general-purpose wiki or knowledge management platform.
+*   **Workflow**: Content → Research Started → Notes Added → Links Added → AI Brainstorm Generated → Research Completed → Move to Script Stage.
+*   **Research Item Types (Phase 1)**:
+    *   `NOTE`: Textual observations, competitor analysis, research findings, and audience insights.
+    *   `LINK`: References pointing to external URLs (e.g., YouTube videos, Instagram posts, blog articles, Reddit threads) with metadata retrieval.
+    *   `AI_BRAINSTORM`: Ideas, content angles, hook suggestions, audience questions, contrarian viewpoints, and structural outlines generated via the AI Gateway.
 
-### 5.4. Script Module & AI Integration
-*   **Script Editor**: Collaborative text editor supporting Markdown.
-*   **Versioning**: Automatically saves snapshots when major changes occur. Supports viewing and restoring historical drafts.
-*   **AI Operations (Powered by Google Gemini)**:
-    *   *Script Generation*: Generate a draft based on the Content title, type, and research notes.
-    *   *Hook Generation*: Create 5 hook variations optimized for user retention (specifically for shorts, reels, or video intros).
-    *   *Script Improvement/Rewrite*: Tone adjustment, shortening, and expansion commands.
+### 5.4. Script Module & Hybrid Workspace
+The Script stage begins after the research workflow is marked completed, using the aggregated notes, links, and brainstorm inputs to feed the AI generator.
+*   **AI Script Generation**: The system compiles the research cards (notes, links, and brainstorm results) as context, sending a request to the AI Provider Gateway to generate an initial draft, which is automatically saved as **Script Version 1.0**.
+*   **Hybrid Editing Strategy**: CreatorOps does not enforce a single script writing environment, allowing teams to use the most productive workflow:
+    *   **Internal Editing**: A focused, lightweight rich-text editor within the web platform supporting basic formatting: Headings, Bold, Italic, Underline, Bullet Lists, and Numbered Lists. It is not intended to compete with advanced doc suites (Google Docs, Microsoft Word).
+    *   **External Editing**: Supports linking to documents managed outside the platform. Users copy the AI-generated draft, write in their preferred external editor, and paste the pointer/reference back in CreatorOps. Supported pointer references:
+        *   Google Docs Link (pastes document URL).
+        *   Microsoft Word Online Link (pastes document URL).
+        *   Uploaded Document (uploads a `.docx` file and stores the storage reference).
+*   **AI Actions (documented for future implementation)**:
+    *   *Generate Script*: Create initial version based on research.
+    *   *Improve Hook*: Create retention-optimized hook variations.
+    *   *Rewrite / Tone Adjustment*: Adapt style.
+    *   *Expand / Shorten / Conversationalize*: Length and voice adjustments.
+*   **Versioning**: Snapshots of the internal editor content are automatically stored when major changes occur, allowing editors to compare and roll back versions.
 
 ### 5.5. Asset Tracking (Phase 1)
 *   **URL-Based Storage**: To minimize early-stage infrastructure costs, assets are stored as raw URLs.
@@ -164,13 +173,14 @@ stateDiagram-v2
 ```
 
 ### 6.2. Script Generation and Refinement Loop
-1.  User creates a Content card with Title: "10 Coding Habits that Will Make You a Staff Engineer".
-2.  Contributor adds three `LINK` research items (competitor video links and articles).
-3.  Contributor clicks "AI Brainstorm" inside the Script module.
-4.  System compiles the Content metadata and Research links, sending a prompt to the AI Gateway.
-5.  Gemini returns an outline. The Contributor edits the outline.
-6.  Contributor clicks "Generate Full Script". The system returns a full voice-over script.
-7.  The editor saves version 1.0. The script is ready for the production phase.
+1.  **Ideation**: User creates a Content card with Title: "10 Coding Habits that Will Make You a Staff Engineer".
+2.  **Research Initiation**: The Content card moves to the `RESEARCH` stage. Contributors add observations (`NOTE` cards) and paste references to articles and videos (`LINK` cards).
+3.  **AI Brainstorm**: The contributor runs the AI Brainstorm operation to generate angles and outlines. Once research is comprehensive, they mark the research stage as completed.
+4.  **AI Script Generation**: Moving to the `SCRIPT` stage, the contributor triggers "AI Generate Script". The system gathers all notes, links, and brainstorm outlines, prompting the AI Gateway to return a full draft. This draft is saved as **Script Version 1.0**.
+5.  **Hybrid Editing Workspace**:
+    *   *Option A (Internal)*: The writer refines the draft directly in the CreatorOps basic rich text editor, saving version snapshots.
+    *   *Option B (External)*: The writer copies the draft, opens Google Docs or Microsoft Word to collaborate/edit, and then pastes the document URL back into the Script metadata as an external reference pointer.
+6.  **Review**: The manager reviews the internal script or follows the external document link. Once approved, the card moves to `PRODUCTION`.
 
 ---
 
@@ -186,12 +196,15 @@ To validate the product during portfolio reviews and live usage:
 
 ## 8. Future Roadmap
 
-*   **Phase 2: Cloud Storage Integration**:
+*   **Phase 2: Cloud Storage & Document Sync Integration**:
     *   Direct integrations with Google Drive API and Microsoft OneDrive.
-    *   Automatic folder creation per Brand and Content card.
+    *   Two-way document synchronization (OAuth-based) for external Google Docs/Word links.
+    *   Automatic folder and template document creation per Brand and Content card.
     *   Direct in-app thumbnail preview and video draft streaming.
-*   **Phase 3: Multi-Channel Publishing**:
+*   **Phase 3: Multi-Channel Publishing & Collaboration**:
     *   API connections to YouTube Data API, LinkedIn API, TikTok API, and Instagram Graph API.
     *   Scheduled push publishing directly from the platform.
+    *   Real-time collaborative document editing for the internal workspace.
+    *   Notion workspace sync and advanced document management options.
 *   **Phase 4: Automatic Analytics Ingestion**:
     *   Daily ingestion of views, click-through-rates (CTR), impressions, and retention graphs directly into the CreatorOps dashboard.

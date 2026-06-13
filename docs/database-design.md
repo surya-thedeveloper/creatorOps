@@ -130,6 +130,11 @@ erDiagram
         bigint id PK
         bigint content_id FK
         integer current_version
+        varchar document_type
+        text generated_script
+        text editor_content
+        varchar external_document_url
+        varchar uploaded_file_reference
         timestamptz created_at
         timestamptz updated_at
     }
@@ -268,10 +273,15 @@ Research notes, outlines, or URL links linked to content.
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
 #### `script`
-Container tracking script status on a content card.
+Container tracking script status, workspace options, and content versions on a content card.
 *   `id`: `BIGINT`, Primary Key, Auto-increment.
 *   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Not Null, Cascade Delete.
 *   `current_version`: `INTEGER`, Not Null, Default `1`.
+*   `document_type`: `VARCHAR(50)`, Not Null, Default `'INTERNAL'`. Enum values: `INTERNAL`, `GOOGLE_DOCS`, `MICROSOFT_WORD_ONLINE`, `UPLOADED_DOC`. Indicates the active script workspace workflow chosen by the user.
+*   `generated_script`: `TEXT`, Null. Storing the initial AI script draft generated from research inputs (Notes, Links, Brainstorm). Used as a baseline for Script Version 1.
+*   `editor_content`: `TEXT`, Null. Storing the editor content of the script when edited internally within the basic rich-text editor.
+*   `external_document_url`: `VARCHAR(1024)`, Null. Stores the URL reference to the external document (e.g. Google Docs or Microsoft Word Online).
+*   `uploaded_file_reference`: `VARCHAR(1024)`, Null. Stores the file name/path reference for uploaded script files (e.g. `.docx` files).
 *   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
