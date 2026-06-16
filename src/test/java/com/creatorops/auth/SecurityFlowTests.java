@@ -51,6 +51,10 @@ class SecurityFlowTests {
 
         when(jwtService.extractUsername(anyString())).thenReturn("surya@example.com");
         when(jwtService.isTokenValid(anyString(), anyString())).thenReturn(true);
+        when(jwtService.extractUserId(anyString())).thenReturn(1L);
+        when(jwtService.extractName(anyString())).thenReturn("Surya");
+        when(jwtService.extractRole(anyString())).thenReturn("ADMIN");
+        when(jwtService.extractOrgId(anyString())).thenReturn(1L);
         when(userRepository.findByEmail("surya@example.com")).thenReturn(Optional.of(user));
 
         mockMvc.perform(get("/api/auth/me")

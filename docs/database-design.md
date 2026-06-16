@@ -25,7 +25,7 @@ erDiagram
     ORGANIZATION ||--o{ USER : employs
     BRAND ||--o{ CONTENT : owns
     CONTENT ||--o{ ASSIGNMENT : assigns
-    CONTENT ||--o{ TASK : contains
+    ASSIGNMENT ||--o{ TASK : contains
     CONTENT ||--o{ COMMENT : contains
     CONTENT ||--o{ RESEARCH_ITEM : contains
     CONTENT ||--o{ SCRIPT : contains
@@ -34,7 +34,9 @@ erDiagram
     USER ||--o{ COMMENT : writes
     USER ||--o{ RESEARCH_ITEM : contributes
     USER ||--o{ SCRIPT : writes
-    ORGANIZATION ||--o{ ACTIVITY_LOG : archives
+    USER ||--o{ ASSET : uploads
+    CONTENT ||--o{ ACTIVITY : tracks
+    USER ||--o{ ACTIVITY : performs
     
     ORGANIZATION {
         bigint id PK
@@ -103,9 +105,15 @@ erDiagram
 
     TASK {
         bigint id PK
-        bigint content_id FK
+        bigint assignment_id FK
         varchar title
+        text description
         varchar status
+        varchar priority
+        bigint assigned_to_user_id FK
+        bigint created_by_user_id FK
+        timestamptz due_date
+        timestamptz completed_at
         timestamptz created_at
         timestamptz updated_at
     }
@@ -148,20 +156,28 @@ erDiagram
     ASSET {
         bigint id PK
         bigint content_id FK
-        varchar type
-        varchar url
+        bigint uploaded_by_user_id FK
+        varchar asset_type
+        varchar asset_source
+        varchar name
+        text description
+        varchar file_url
+        bigint file_size
+        varchar mime_type
+        integer version
         timestamptz created_at
         timestamptz updated_at
     }
 
-    ACTIVITY_LOG {
+    ACTIVITY {
         bigint id PK
-        bigint organization_id FK
-        bigint brand_id FK
         bigint content_id FK
         bigint user_id FK
-        varchar action
+        varchar event_type
+        varchar entity_type
+        bigint entity_id
         text description
+        text metadata_json
         timestamptz created_at
     }
 ```
@@ -242,11 +258,17 @@ Maps users (contributors/managers) to specific tasks and roles on a content card
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
 #### `task`
-Actionable checklist tasks nested within a content card.
+Granular execution work items nested under assignments.
 *   `id`: `BIGINT`, Primary Key, Auto-increment.
-*   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Not Null, Cascade Delete.
+*   `assignment_id`: `BIGINT`, Foreign Key references `assignment(id)`, Not Null, Cascade Delete.
 *   `title`: `VARCHAR(255)`, Not Null.
-*   `status`: `VARCHAR(50)`, Not Null, Default `'TODO'` (Enum values: `TODO`, `IN_PROGRESS`, `DONE`).
+*   `description`: `TEXT`, Null.
+*   `status`: `VARCHAR(50)`, Not Null, Default `'TODO'` (Enum values: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`).
+*   `priority`: `VARCHAR(50)`, Not Null, Default `'MEDIUM'` (Enum values: `LOW`, `MEDIUM`, `HIGH`, `URGENT`).
+*   `assigned_to_user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
+*   `created_by_user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
+*   `due_date`: `TIMESTAMPTZ`, Null.
+*   `completed_at`: `TIMESTAMPTZ`, Null.
 *   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
@@ -290,11 +312,18 @@ Container tracking script versions, rich text, and external references on a cont
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
 #### `asset`
-Phase 1 asset manager (URL reference repository).
+SaaS production asset tracker containing references to raw/edited footage, thumbnails, scripts, and documents.
 *   `id`: `BIGINT`, Primary Key, Auto-increment.
 *   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Not Null, Cascade Delete.
-*   `type`: `VARCHAR(50)`, Not Null (Enum values: `RAW_VIDEO`, `EDITED_VIDEO`, `THUMBNAIL`, `OTHER`).
-*   `url`: `VARCHAR(1024)`, Not Null.
+*   `uploaded_by_user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
+*   `asset_type`: `VARCHAR(50)`, Not Null (Enum values: `RAW_VIDEO`, `EDITED_VIDEO`, `THUMBNAIL`, `IMAGE`, `AUDIO`, `DOCUMENT`, `SCRIPT_FILE`, `OTHER`).
+*   `asset_source`: `VARCHAR(50)`, Not Null (Enum values: `GOOGLE_DRIVE`, `ONEDRIVE`, `EXTERNAL_URL`, `LOCAL_UPLOAD`).
+*   `name`: `VARCHAR(255)`, Not Null.
+*   `description`: `TEXT`, Null.
+*   `file_url`: `VARCHAR(2048)`, Not Null.
+*   `file_size`: `BIGINT`, Null.
+*   `mime_type`: `VARCHAR(100)`, Null.
+*   `version`: `INTEGER`, Not Null, Default `1`.
 *   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
@@ -302,15 +331,16 @@ Phase 1 asset manager (URL reference repository).
 
 ### 3.4. Activity Logging
 
-#### `activity_log`
+#### `activity`
 Chronological operations journal tracking changes across brands and content.
 *   `id`: `BIGINT`, Primary Key, Auto-increment.
-*   `organization_id`: `BIGINT`, Foreign Key references `organization(id)`, Not Null.
-*   `brand_id`: `BIGINT`, Foreign Key references `brand(id)`, Null.
-*   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Null.
+*   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Not Null, Cascade Delete.
 *   `user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
-*   `action`: `VARCHAR(100)`, Not Null (e.g. `'CONTENT_CREATED'`, `'ASSIGNMENT_UPDATED'`).
+*   `event_type`: `VARCHAR(50)`, Not Null (e.g. `'CONTENT_CREATED'`, `'ASSIGNMENT_UPDATED'`).
+*   `entity_type`: `VARCHAR(50)`, Not Null.
+*   `entity_id`: `BIGINT`, Not Null.
 *   `description`: `TEXT`, Not Null.
+*   `metadata_json`: `TEXT`, Null.
 *   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
 ---
@@ -337,7 +367,7 @@ The following supporting metadata entities are **hard deleted** (physical deleti
 *   `comment`
 *   `script`
 *   `asset`
-*   `activity_log`
+*   `activity`
 *   `research_item`
 
 To avoid foreign key constraints orphans, foreign keys pointing to parent tables are declared with `ON DELETE CASCADE`. For example, deleting a `content` record (hard or soft) cascades cleanups down to its dependent task lists and commentaries.
@@ -357,13 +387,13 @@ Database constraints protect data integrity but do not automatically add lookup 
 *   `brand(organization_id)`
 *   `content(brand_id)`
 *   `assignment(content_id)`, `assignment(user_id)`
-*   `task(content_id)`
+*   `task(assignment_id)`, `task(assigned_to_user_id)`, `task(created_by_user_id)`
 *   `comment(content_id)`
 *   `research_item(content_id)`
 *   `script(content_id)`
 *   `script(user_id)`
 *   `asset(content_id)`
-*   `activity_log(organization_id)`, `activity_log(content_id)`
+*   `activity(content_id)`, `activity(user_id)`
 
 ### 3. Partial & Performance Indexes
 *   **Soft Delete Indexing**: Since major queries filter out deleted items, composite indexes containing `is_deleted` improve performance:
@@ -397,7 +427,7 @@ erDiagram
     ORGANIZATION ||--o{ "user" : employs
     BRAND ||--o{ CONTENT : owns
     CONTENT ||--o{ ASSIGNMENT : assigns
-    CONTENT ||--o{ TASK : contains
+    ASSIGNMENT ||--o{ TASK : contains
     CONTENT ||--o{ COMMENT : contains
     CONTENT ||--o{ RESEARCH_ITEM : contains
     CONTENT ||--o{ SCRIPT : contains
@@ -407,7 +437,8 @@ erDiagram
     "user" ||--o{ RESEARCH_ITEM : contributes
     "user" ||--o{ SCRIPT_VERSION : saves
     SCRIPT ||--o{ SCRIPT_VERSION : catalogs
-    ORGANIZATION ||--o{ ACTIVITY_LOG : archives
+    CONTENT ||--o{ ACTIVITY : tracks
+    "user" ||--o{ ACTIVITY : performs
 ```
 
 ---
@@ -447,14 +478,14 @@ erDiagram
 ### assignment
 *   **Purpose**: Maps creators and tasks to content execution cards.
 *   **Parent Entity**: `content` (via `content_id`), `"user"` (via `assigned_to_user_id` and `assigned_by_user_id`).
-*   **Child Entities**: None.
+*   **Child Entities**: `task`.
 *   **Business Responsibility**: Outlines team task assignments and progress states (`ASSIGNED` to `COMPLETED` or `CANCELLED`).
 
 ### task
-*   **Purpose**: Lightweight checklist sub-item under content cards.
-*   **Parent Entity**: `content`.
+*   **Purpose**: Actionable work items partitioned under assignments.
+*   **Parent Entity**: `assignment` (via `assignment_id`), `"user"` (via `assigned_to_user_id` and `created_by_user_id`).
 *   **Child Entities**: None.
-*   **Business Responsibility**: Tracks execution tasks (e.g. "design thumbnail", "record audio voiceover") with a simple toggle state (`TODO`, `IN_PROGRESS`, `DONE`).
+*   **Business Responsibility**: Coordinates actual task details (writing hook, designing thumbnail), priorities, due dates, and completion status.
 
 ### research_item
 *   **Purpose**: Reference references and AI outlines linked to content.
@@ -480,9 +511,9 @@ erDiagram
 *   **Child Entities**: None.
 *   **Business Responsibility**: Facilitates peer review and feedback directly adjacent to the content planning details.
 
-### activity_log (activity)
+### activity
 *   **Purpose**: Chronological system operations audit journal.
-*   **Parent Entity**: `organization` (via `organization_id`), `brand` (optional), `content` (optional), `"user"` (via `user_id`).
+*   **Parent Entity**: `content` (via `content_id`), `"user"` (via `user_id`).
 *   **Child Entities**: None.
 *   **Business Responsibility**: Records lifecycle status changes, assignments, and structural modifications to build an audit history of the creative pipeline.
 
@@ -509,7 +540,7 @@ erDiagram
 *   **Scaling Potential (Multi-Tenant User Accounts)**:
     *   The direct link between `"user"` and `organization` in V1 restricts a user to exactly one tenant. For phase 2, migrating to a separate `membership` table will allow users (like freelance video editors) to switch between different organizations (tenants) using a single email registration.
 *   **Audit Log Partitioning**:
-    *   The `activity_log` table will accumulate rows faster than any other table. Archiving or partitioning this table using PostgreSQL range partitioning on the `created_at` timestamp will keep primary transaction speeds fast as tables scale.
+    *   The `activity` table will accumulate rows faster than any other table. Archiving or partitioning this table using PostgreSQL range partitioning on the `created_at` timestamp will keep primary transaction speeds fast as tables scale.
 *   **Asset Management Extensions**:
     *   V1 stores assets strictly as URLs. The schema index layout (`idx_asset_content_id`) is designed to support a future extension linking directly to cloud-native storage assets (e.g., AWS S3 keys or Google Drive file IDs) without table structural changes.
 

@@ -128,7 +128,7 @@ class AuthServiceTests {
     @Test
     void resetPassword_Success() {
         user.setPasswordResetToken("reset_token");
-        user.setPasswordResetExpiry(java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+        user.setPasswordResetExpiry(java.time.OffsetDateTime.now().plusHours(1));
 
         ResetPasswordRequest request = new ResetPasswordRequest("reset_token", "NewSecurePassword123");
         when(userRepository.findByPasswordResetToken("reset_token")).thenReturn(Optional.of(user));
@@ -145,7 +145,7 @@ class AuthServiceTests {
     @Test
     void resetPassword_ExpiredToken_ThrowsException() {
         user.setPasswordResetToken("expired_token");
-        user.setPasswordResetExpiry(java.time.Instant.now().minus(java.time.Duration.ofHours(1)));
+        user.setPasswordResetExpiry(java.time.OffsetDateTime.now().minusHours(1));
 
         ResetPasswordRequest request = new ResetPasswordRequest("expired_token", "NewSecurePassword123");
         when(userRepository.findByPasswordResetToken("expired_token")).thenReturn(Optional.of(user));

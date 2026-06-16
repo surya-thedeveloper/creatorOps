@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.OffsetDateTime;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -116,7 +117,7 @@ public class AuthServiceImpl implements AuthService {
 
         String token = java.util.UUID.randomUUID().toString();
         user.setPasswordResetToken(token);
-        user.setPasswordResetExpiry(java.time.Instant.now().plus(java.time.Duration.ofHours(1)));
+        user.setPasswordResetExpiry(OffsetDateTime.now().plusHours(1));
 
         userRepository.save(user);
         System.out.println("DEBUG: Password reset token generated for " + user.getEmail() + " -> " + token);
@@ -128,7 +129,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByPasswordResetToken(request.token())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid or expired reset token"));
 
-        if (user.getPasswordResetExpiry() == null || user.getPasswordResetExpiry().isBefore(java.time.Instant.now())) {
+        if (user.getPasswordResetExpiry() == null || user.getPasswordResetExpiry().isBefore(OffsetDateTime.now())) {
             throw new InvalidCredentialsException("Invalid or expired reset token");
         }
 

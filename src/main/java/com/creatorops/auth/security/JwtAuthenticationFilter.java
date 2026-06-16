@@ -14,6 +14,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import java.util.Optional;
+import com.creatorops.auth.entity.User;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -41,11 +43,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             final String userEmail = jwtService.extractUsername(jwt);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userRepository.findByEmail(userEmail).orElse(null);
+                Long userId = jwtService.extractUserId(jwt);
+                String name = jwtService.extractName(jwt);
+                String role = jwtService.extractRole(jwt);
+                Long orgId = jwtService.extractOrgId(jwt);
 
-                if (userDetails != null && jwtService.isTokenValid(jwt, userDetails.getUsername())) {
+                UserPrincipal userPrincipal = null;
+                if (userId != null && role != null && orgId != null) {
+                    userPrincipal = new UserPrincipal(userId, userEmail, name, role, orgId);
+                } else {
+                    // Fallback to database lookup for backward compatibility and tests
+                    Optional<User> userOpt = userRepository.findByEmail(userEmail);
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        userPrincipal = new UserPrincipal(
+                            user.getId(),
+                            user.getEmail(),
+                            user.getName(),
+                            user.getRole().name(),
+                            user.getOrganization() != null ? user.getOrganization().getId() : null
+                        );
+                    }
+                }
+
+                if (userPrincipal != null && jwtService.isTokenValid(jwt, userPrincipal.getUsername())) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities()
+                            userPrincipal, null, userPrincipal.getAuthorities()
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);

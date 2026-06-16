@@ -196,44 +196,127 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
 *   **`DELETE /api/contents/{id}`**: Soft delete a content card. (Admin / Manager only).
 
 ### 4.5. Research Module
-*   **`GET /api/contents/{contentId}/research-items`**: List research cards.
-*   **`POST /api/contents/{contentId}/research-items`**: Add research (Note, Link, or AI response).
+*   **`GET /api/contents/{contentId}/research`**: List research cards for a content card.
+*   **`POST /api/contents/{contentId}/research`**: Add research item (Note, Link, or AI response).
     *   *Request Payload*:
         ```json
         {
           "type": "LINK",
+          "title": "Competitor Analysis",
           "url": "https://youtube.com/watch?v=123",
-          "content": "Competitor layout references"
+          "contentText": "Video pacing and hook structure ideas"
         }
         ```
-*   **`DELETE /api/research-items/{id}`**: Hard delete research cards.
+*   **`GET /api/research/{id}`**: Get details of a single research card.
+*   **`PUT /api/research/{id}`**: Update a research card.
+*   **`DELETE /api/research/{id}`**: Hard delete a research card.
 
-### 4.6. Script Module & AI Actions
-*   **`GET /api/contents/{contentId}/script`**: Retrieve current script metadata and contents.
-*   **`POST /api/contents/{contentId}/script/versions`**: Push a new manual edit version snapshot.
-*   **`POST /api/contents/{contentId}/script/ai-generate`**: Ask AI Gateway to generate a script draft.
+### 4.6. Script Module
+*   **`GET /api/contents/{contentId}/scripts`**: List all script versions for a content card.
+*   **`POST /api/contents/{contentId}/scripts`**: Push a new script draft snapshot.
     *   *Request Payload*:
         ```json
         {
-          "promptInstructions": "Write a funny intro, focused on beginner coders."
+          "documentType": "INTERNAL",
+          "editorContent": "Welcome to this tutorial on clean code...",
+          "externalDocumentUrl": null,
+          "uploadedFileReference": null,
+          "generatedScript": "Welcome to this tutorial on clean code..."
         }
         ```
-*   **`POST /api/contents/{contentId}/script/ai-hooks`**: Ask AI Gateway to return hook variants.
+*   **`GET /api/scripts/{id}`**: Retrieve script draft details.
+*   **`PUT /api/scripts/{id}`**: Update a script version.
+*   **`DELETE /api/scripts/{id}`**: Hard delete a script draft.
 
 ### 4.7. Assignments & Tasks
-*   **`POST /api/contents/{contentId}/assignments`**: Create assignments mapping roles to contributors.
+
+#### Assignments
+*   **`POST /api/contents/{contentId}/assignments`**: Create an assignment mapping a contributor role to content.
     *   *Request Payload*:
         ```json
         {
-          "userId": 4,
-          "role": "Script Writing",
-          "status": "PENDING"
+          "assignedToUserId": 4,
+          "assignmentType": "SCRIPT",
+          "notes": "Draft initial script",
+          "dueDate": "2026-06-30T12:00:00Z"
         }
         ```
-*   **`PUT /api/assignments/{id}`**: Update assignment progress status (e.g. to `IN_PROGRESS`).
-*   **`POST /api/contents/{contentId}/tasks`**: Append checklist tasks.
-*   **`PUT /api/tasks/{id}`**: Toggle completion state of a task.
-*   **`DELETE /api/tasks/{id}`**: Hard delete checklist tasks.
+*   **`GET /api/contents/{contentId}/assignments`**: Get all assignments for a content card.
+*   **`GET /api/assignments/my`**: Get current contributor's assignments. Optional query: `?status=ASSIGNED`
+*   **`GET /api/assignments/{id}`**: Fetch single assignment details.
+*   **`PUT /api/assignments/{id}`**: Update assignment user, type, notes, or due date. (Admin/Manager only).
+*   **`PATCH /api/assignments/{id}/status`**: Update assignment execution status (e.g. `IN_PROGRESS`, `COMPLETED`, `BLOCKED`).
+    *   *Request Payload*:
+        ```json
+        {
+          "status": "COMPLETED"
+        }
+        ```
+*   **`DELETE /api/assignments/{id}`**: Hard delete an assignment. (Admin/Manager only).
 
-### 4.8. Activity Timeline
-*   **`GET /api/contents/{contentId}/activity-logs`**: Fetch changes chronologically.
+#### Tasks (Checklist items under assignments)
+*   **`POST /api/assignments/{assignmentId}/tasks`**: Append checklist task.
+    *   *Request Payload*:
+        ```json
+        {
+          "title": "Write script intro",
+          "description": "Ensure a solid hook",
+          "assignedToUserId": 4,
+          "priority": "HIGH",
+          "dueDate": "2026-06-25T12:00:00Z"
+        }
+        ```
+*   **`GET /api/assignments/{assignmentId}/tasks`**: List tasks under an assignment.
+*   **`GET /api/tasks/{id}`**: Get single task details.
+*   **`GET /api/tasks/my`**: Get current contributor's checklist tasks. Optional queries: `?status=TODO&priority=HIGH`
+*   **`PUT /api/tasks/{id}`**: Update full task details. (Admin/Manager only).
+*   **`PATCH /api/tasks/{id}/status`**: Toggle task execution status (`TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`).
+    *   *Request Payload*:
+        ```json
+        {
+          "status": "DONE"
+        }
+        ```
+*   **`DELETE /api/tasks/{id}`**: Hard delete a task. (Admin/Manager only).
+
+### 4.8. Asset Tracking
+*   **`POST /api/contents/{contentId}/assets`**: Register a media asset reference.
+    *   *Request Payload*:
+        ```json
+        {
+          "name": "Rough Video Edit V1",
+          "description": "Initial cuts",
+          "assetType": "EDITED_VIDEO",
+          "assetSource": "GOOGLE_DRIVE",
+          "fileUrl": "https://drive.google.com/file/d/rough_draft",
+          "fileSize": 104857600,
+          "mimeType": "video/mp4",
+          "version": 1
+        }
+        ```
+*   **`GET /api/contents/{contentId}/assets`**: Get all assets associated with content.
+*   **`GET /api/assets/{id}`**: Fetch single asset details.
+*   **`PUT /api/assets/{id}`**: Update asset metadata.
+*   **`DELETE /api/assets/{id}`**: Hard delete an asset reference.
+
+### 4.9. Activity Timeline
+*   **`GET /api/contents/{contentId}/activities`**: Fetch content audit logs chronologically (sorted by newest first by default).
+*   **`GET /api/activities/{id}`**: Retrieve detailed activity log entry by ID.
+
+### 4.10. Content Calendar Projections
+*   **`GET /api/calendar`**: Fetch scheduled content range. Query parameters: `?startDate=2026-06-01T00:00:00Z&endDate=2026-06-30T23:59:59Z`
+*   **`GET /api/calendar/upcoming`**: Retrieve paginated upcoming content.
+*   **`GET /api/calendar/scheduled`**: Fetch scheduled content cards.
+*   **`GET /api/calendar/published`**: Get published content history.
+*   **`GET /api/calendar/overdue`**: List overdue content cards.
+
+### 4.11. Analytics Dashboard
+*   **`GET /api/analytics/dashboard`**: Return home page operational metrics.
+*   **`GET /api/analytics/content`**: Retrieve content counts grouped by stage, type, and priority.
+*   **`GET /api/analytics/assignments`**: Get assignments status and type counts.
+*   **`GET /api/analytics/tasks`**: Get task statistics and overdue counts.
+*   **`GET /api/analytics/publishing`**: Return publication calendar timeline performance trends.
+
+### 4.12. AI Brainstorming & Generation
+*   **`POST /api/ai/contents/{contentId}/brainstorm`**: Ask AI Gateway to generate click hooks, title options, and outlining recommendations. Results are saved as an `AI_BRAINSTORM` ResearchItem.
+*   **`POST /api/ai/contents/{contentId}/generate-script`**: Prompt AI Gateway to generate a conversation script draft based on compiled research context. Outlines are appended as Script Version 1.0.

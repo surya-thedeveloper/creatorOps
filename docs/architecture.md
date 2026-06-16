@@ -51,20 +51,22 @@ Within the Spring Boot project, files are structured by domain package rather th
 
 ```
 com.creatorops
-├── core
-│   ├── config          # Global Spring configuration (Cors, Jackson, Async)
-│   ├── security        # Spring Security configuration, JWT filters
-│   └── exception       # RFC 7807 Global Exception Handler
-├── domain
-│   ├── organization    # Org Management domain classes, service, controllers
-│   ├── brand           # Brand domain classes, service, controllers
-│   ├── content         # Content, lifecycle state machine, tasks, comments
-│   ├── research        # Research item handlers (notes, links, scraper)
-│   ├── script          # Script editor, version history engine
-│   └── assignment      # Contributor assignments, workflow mapping
-└── integration
-    ├── ai              # Pluggable AI Gateway interface and implementations
-    └── storage         # Phase 2: Cloud Storage integration connectors
+├── activity            # Timeline activity log auditing
+├── ai                  # Pluggable AI Gateway configurations, adapters, services
+├── analytics           # Dashboard summary queries and metric endpoints
+├── asset               # URL-based asset management services and endpoints
+├── assignment          # Contributor workflow mappings and status boundaries
+├── auth                # Security models, JWT validations, user profiles
+├── brand               # Tenant sub-channel partitions and brand settings
+├── calendar            # Content schedule and agenda projections
+├── comment             # Discussion comment threads package-info placeholder
+├── common              # Standard base entities, global custom exceptions, RFC 7807 handlers
+├── config              # Global configurations (JPA auditing, database initializers, WebSecurity)
+├── content             # Core Content cards, lifecycle states, priority lookups
+├── organization        # Multi-tenant root entities and organization profiles
+├── research            # Context card collectors (notes, URLs, brainstorming)
+├── script              # Draft editors, version snapshots, and upload references
+└── task                # Checklist sub-tasks nested under assignments
 ```
 
 ### Layered Architecture Inside a Domain Package

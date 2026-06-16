@@ -19,6 +19,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
+import com.creatorops.activity.entity.EntityType;
+import com.creatorops.activity.entity.EventType;
+import com.creatorops.activity.service.ActivityService;
 
 /**
  * <h3>Why this class exists</h3>
@@ -41,14 +44,17 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
+    private final ActivityService activityService;
 
     @Autowired
     public AssignmentServiceImpl(AssignmentRepository assignmentRepository,
                                  ContentRepository contentRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 ActivityService activityService) {
         this.assignmentRepository = assignmentRepository;
         this.contentRepository = contentRepository;
         this.userRepository = userRepository;
+        this.activityService = activityService;
     }
 
     @Override
@@ -93,6 +99,15 @@ public class AssignmentServiceImpl implements AssignmentService {
         assignment.setDueDate(request.dueDate());
 
         Assignment saved = assignmentRepository.save(assignment);
+        activityService.record(
+            content,
+            creator,
+            EventType.ASSIGNMENT_CREATED,
+            EntityType.ASSIGNMENT,
+            saved.getId(),
+            "Assignment for " + saved.getAssignmentType().name() + " assigned to " + saved.getAssignedToUser().getName() + " created",
+            null
+        );
         return AssignmentResponse.fromEntity(saved);
     }
 
@@ -185,6 +200,15 @@ public class AssignmentServiceImpl implements AssignmentService {
         assignment.setDueDate(request.dueDate());
 
         Assignment updated = assignmentRepository.save(assignment);
+        activityService.record(
+            updated.getContent(),
+            updater,
+            EventType.ASSIGNMENT_UPDATED,
+            EntityType.ASSIGNMENT,
+            updated.getId(),
+            "Assignment for " + updated.getAssignmentType().name() + " assigned to " + updated.getAssignedToUser().getName() + " updated",
+            null
+        );
         return AssignmentResponse.fromEntity(updated);
     }
 
@@ -229,6 +253,15 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
 
         Assignment updated = assignmentRepository.save(assignment);
+        activityService.record(
+            updated.getContent(),
+            updater,
+            EventType.ASSIGNMENT_STATUS_CHANGED,
+            EntityType.ASSIGNMENT,
+            updated.getId(),
+            "Assignment status changed from " + oldStatus + " to " + newStatus,
+            "{\"oldStatus\":\"" + oldStatus + "\",\"newStatus\":\"" + newStatus + "\"}"
+        );
         return AssignmentResponse.fromEntity(updated);
     }
 
@@ -250,6 +283,16 @@ public class AssignmentServiceImpl implements AssignmentService {
         if (!assignment.getContent().getBrand().getOrganizationId().equals(deleter.getOrganizationId())) {
             throw new AccessDeniedException("Access denied: Assignment belongs to a different organization.");
         }
+
+        activityService.record(
+            assignment.getContent(),
+            deleter,
+            EventType.ASSIGNMENT_DELETED,
+            EntityType.ASSIGNMENT,
+            assignment.getId(),
+            "Assignment for " + assignment.getAssignmentType().name() + " assigned to " + assignment.getAssignedToUser().getName() + " deleted",
+            null
+        );
 
         assignmentRepository.delete(assignment);
     }

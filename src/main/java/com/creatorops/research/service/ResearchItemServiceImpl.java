@@ -10,6 +10,9 @@ import com.creatorops.research.dto.ResearchItemResponse;
 import com.creatorops.research.entity.ResearchItem;
 import com.creatorops.research.entity.ResearchItemType;
 import com.creatorops.research.repository.ResearchItemRepository;
+import com.creatorops.activity.entity.EntityType;
+import com.creatorops.activity.entity.EventType;
+import com.creatorops.activity.service.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,14 +48,17 @@ public class ResearchItemServiceImpl implements ResearchItemService {
     private final ResearchItemRepository researchItemRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
+    private final ActivityService activityService;
 
     @Autowired
     public ResearchItemServiceImpl(ResearchItemRepository researchItemRepository,
                                   ContentRepository contentRepository,
-                                  UserRepository userRepository) {
+                                  UserRepository userRepository,
+                                  ActivityService activityService) {
         this.researchItemRepository = researchItemRepository;
         this.contentRepository = contentRepository;
         this.userRepository = userRepository;
+        this.activityService = activityService;
     }
 
     @Override
@@ -79,6 +85,15 @@ public class ResearchItemServiceImpl implements ResearchItemService {
         );
 
         ResearchItem saved = researchItemRepository.save(item);
+        activityService.record(
+            content,
+            user,
+            EventType.RESEARCH_CREATED,
+            EntityType.RESEARCH,
+            saved.getId(),
+            "Research note added",
+            null
+        );
         return ResearchItemResponse.fromEntity(saved);
     }
 
@@ -143,6 +158,15 @@ public class ResearchItemServiceImpl implements ResearchItemService {
         item.setUrl(request.externalUrl());
 
         ResearchItem updated = researchItemRepository.save(item);
+        activityService.record(
+            updated.getContent(),
+            user,
+            EventType.RESEARCH_UPDATED,
+            EntityType.RESEARCH,
+            updated.getId(),
+            "Research item updated",
+            null
+        );
         return ResearchItemResponse.fromEntity(updated);
     }
 
@@ -159,6 +183,16 @@ public class ResearchItemServiceImpl implements ResearchItemService {
         if (!item.getContent().getBrand().getOrganizationId().equals(user.getOrganizationId())) {
             throw new AccessDeniedException("Access denied: Cannot delete research outside your organization.");
         }
+
+        activityService.record(
+            item.getContent(),
+            user,
+            EventType.RESEARCH_DELETED,
+            EntityType.RESEARCH,
+            item.getId(),
+            "Research item deleted",
+            null
+        );
 
         researchItemRepository.delete(item);
     }

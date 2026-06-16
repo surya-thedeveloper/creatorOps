@@ -11,12 +11,16 @@ import com.creatorops.content.entity.Content;
 import com.creatorops.content.entity.ContentStage;
 import com.creatorops.content.entity.ContentType;
 import com.creatorops.content.repository.ContentRepository;
+import com.creatorops.activity.entity.EntityType;
+import com.creatorops.activity.entity.EventType;
+import com.creatorops.activity.service.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.OffsetDateTime;
 
 /**
  * <h3>Why this class exists</h3>
@@ -45,14 +49,17 @@ public class ContentServiceImpl implements ContentService {
     private final ContentRepository contentRepository;
     private final BrandRepository brandRepository;
     private final UserRepository userRepository;
+    private final ActivityService activityService;
 
     @Autowired
     public ContentServiceImpl(ContentRepository contentRepository,
                               BrandRepository brandRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              ActivityService activityService) {
         this.contentRepository = contentRepository;
         this.brandRepository = brandRepository;
         this.userRepository = userRepository;
+        this.activityService = activityService;
     }
 
     @Override
@@ -84,6 +91,38 @@ public class ContentServiceImpl implements ContentService {
         );
 
         Content saved = contentRepository.save(content);
+        activityService.record(
+            saved,
+            user,
+            EventType.CONTENT_CREATED,
+            EntityType.CONTENT,
+            saved.getId(),
+            "Content '" + saved.getTitle() + "' was created",
+            null
+        );
+
+        if (saved.getStage() == ContentStage.SCHEDULED || saved.getPublishDate() != null) {
+            activityService.record(
+                saved,
+                user,
+                EventType.CONTENT_SCHEDULED,
+                EntityType.CONTENT,
+                saved.getId(),
+                "Content '" + saved.getTitle() + "' was scheduled",
+                null
+            );
+        } else if (saved.getStage() == ContentStage.PUBLISHED) {
+            activityService.record(
+                saved,
+                user,
+                EventType.CONTENT_PUBLISHED,
+                EntityType.CONTENT,
+                saved.getId(),
+                "Content '" + saved.getTitle() + "' was published",
+                null
+            );
+        }
+
         return ContentResponse.fromEntity(saved);
     }
 
@@ -146,6 +185,9 @@ public class ContentServiceImpl implements ContentService {
             throw new AccessDeniedException("Access denied: Cannot transfer content to a brand outside your organization.");
         }
 
+        ContentStage oldStage = content.getStage();
+        OffsetDateTime oldPublishDate = content.getPublishDate();
+
         content.setBrand(newBrand);
         content.setTitle(request.title());
         content.setDescription(request.description());
@@ -156,6 +198,60 @@ public class ContentServiceImpl implements ContentService {
         content.setPublishDate(request.publishDate());
 
         Content updated = contentRepository.save(content);
+        activityService.record(
+            updated,
+            user,
+            EventType.CONTENT_UPDATED,
+            EntityType.CONTENT,
+            updated.getId(),
+            "Content '" + updated.getTitle() + "' was updated",
+            null
+        );
+
+        if (updated.getStage() == ContentStage.SCHEDULED && oldStage != ContentStage.SCHEDULED) {
+            activityService.record(
+                updated,
+                user,
+                EventType.CONTENT_SCHEDULED,
+                EntityType.CONTENT,
+                updated.getId(),
+                "Content '" + updated.getTitle() + "' was scheduled",
+                null
+            );
+        } else if (updated.getStage() == ContentStage.PUBLISHED && oldStage != ContentStage.PUBLISHED) {
+            activityService.record(
+                updated,
+                user,
+                EventType.CONTENT_PUBLISHED,
+                EntityType.CONTENT,
+                updated.getId(),
+                "Content '" + updated.getTitle() + "' was published",
+                null
+            );
+        }
+
+        if (oldPublishDate == null && updated.getPublishDate() != null && updated.getStage() != ContentStage.SCHEDULED) {
+            activityService.record(
+                updated,
+                user,
+                EventType.CONTENT_SCHEDULED,
+                EntityType.CONTENT,
+                updated.getId(),
+                "Content '" + updated.getTitle() + "' was scheduled",
+                null
+            );
+        } else if (oldPublishDate != null && updated.getPublishDate() != null && !oldPublishDate.isEqual(updated.getPublishDate())) {
+            activityService.record(
+                updated,
+                user,
+                EventType.CONTENT_RESCHEDULED,
+                EntityType.CONTENT,
+                updated.getId(),
+                "Content '" + updated.getTitle() + "' was rescheduled",
+                null
+            );
+        }
+
         return ContentResponse.fromEntity(updated);
     }
 
@@ -175,6 +271,16 @@ public class ContentServiceImpl implements ContentService {
         if (!content.getBrand().getOrganizationId().equals(user.getOrganizationId())) {
             throw new AccessDeniedException("Access denied: Cannot delete content outside your organization.");
         }
+
+        activityService.record(
+            content,
+            user,
+            EventType.CONTENT_DELETED,
+            EntityType.CONTENT,
+            content.getId(),
+            "Content '" + content.getTitle() + "' was deleted",
+            null
+        );
 
         contentRepository.delete(content);
     }

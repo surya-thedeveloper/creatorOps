@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "\"user\"")
@@ -41,7 +42,7 @@ public class User extends BaseEntity implements UserDetails {
     private String passwordResetToken;
 
     @Column(name = "password_reset_expiry")
-    private java.time.Instant passwordResetExpiry;
+    private OffsetDateTime passwordResetExpiry;
 
 
     // Constructors
@@ -122,11 +123,11 @@ public class User extends BaseEntity implements UserDetails {
         this.passwordResetToken = passwordResetToken;
     }
 
-    public java.time.Instant getPasswordResetExpiry() {
+    public OffsetDateTime getPasswordResetExpiry() {
         return passwordResetExpiry;
     }
 
-    public void setPasswordResetExpiry(java.time.Instant passwordResetExpiry) {
+    public void setPasswordResetExpiry(OffsetDateTime passwordResetExpiry) {
         this.passwordResetExpiry = passwordResetExpiry;
     }
 

@@ -87,6 +87,30 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
+    public Long extractUserId(String token) {
+        Object val = extractClaim(token, claims -> claims.get("userId"));
+        if (val instanceof Number) {
+            return ((Number) val).longValue();
+        }
+        return null;
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public Long extractOrgId(String token) {
+        Object val = extractClaim(token, claims -> claims.get("orgId"));
+        if (val instanceof Number) {
+            return ((Number) val).longValue();
+        }
+        return null;
+    }
+
+    public String extractName(String token) {
+        return extractClaim(token, claims -> claims.get("name", String.class));
+    }
+
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())

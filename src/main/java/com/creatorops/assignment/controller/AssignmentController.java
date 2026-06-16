@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
@@ -41,6 +43,7 @@ public class AssignmentController {
     }
 
     @PostMapping("/contents/{contentId}/assignments")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<AssignmentResponse> createAssignment(
             @PathVariable Long contentId,
             Authentication authentication,
@@ -76,6 +79,7 @@ public class AssignmentController {
     }
 
     @PutMapping("/assignments/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<AssignmentResponse> updateAssignment(
             @PathVariable Long id,
             @Valid @RequestBody AssignmentRequest request,
@@ -94,6 +98,7 @@ public class AssignmentController {
     }
 
     @DeleteMapping("/assignments/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> deleteAssignment(
             @PathVariable Long id,
             Authentication authentication) {
