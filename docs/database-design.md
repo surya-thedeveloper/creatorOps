@@ -89,9 +89,14 @@ erDiagram
     ASSIGNMENT {
         bigint id PK
         bigint content_id FK
-        bigint user_id FK
-        varchar role
+        bigint assigned_to_user_id FK
+        bigint assigned_by_user_id FK
+        varchar assignment_type
         varchar status
+        text notes
+        timestamptz due_date
+        timestamptz started_at
+        timestamptz completed_at
         timestamptz created_at
         timestamptz updated_at
     }
@@ -222,12 +227,17 @@ The central repository card representing a piece of planned media.
 *   `deleted_at`: `TIMESTAMPTZ`, Null.
 
 #### `assignment`
-Maps users (contributors/managers) to specific roles on a content card.
+Maps users (contributors/managers) to specific tasks and roles on a content card.
 *   `id`: `BIGINT`, Primary Key, Auto-increment.
 *   `content_id`: `BIGINT`, Foreign Key references `content(id)`, Not Null, Cascade Delete.
-*   `user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
-*   `role`: `VARCHAR(100)`, Not Null. Represents the job assigned (e.g., `'Research'`, `'Script'`, `'Editing'`).
-*   `status`: `VARCHAR(50)`, Not Null, Default `'PENDING'` (Enum values: `PENDING`, `IN_PROGRESS`, `COMPLETED`).
+*   `assigned_to_user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
+*   `assigned_by_user_id`: `BIGINT`, Foreign Key references `user(id)`, Not Null.
+*   `assignment_type`: `VARCHAR(50)`, Not Null (Enum values: `RESEARCH`, `SCRIPT`, `PRODUCTION`, `EDITING`, `REVIEW`, `PUBLISHING`).
+*   `status`: `VARCHAR(50)`, Not Null, Default `'ASSIGNED'` (Enum values: `ASSIGNED`, `IN_PROGRESS`, `BLOCKED`, `COMPLETED`, `CANCELLED`).
+*   `notes`: `TEXT`, Null.
+*   `due_date`: `TIMESTAMPTZ`, Null.
+*   `started_at`: `TIMESTAMPTZ`, Null.
+*   `completed_at`: `TIMESTAMPTZ`, Null.
 *   `created_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 *   `updated_at`: `TIMESTAMPTZ`, Not Null, Default `CURRENT_TIMESTAMP`.
 
@@ -413,7 +423,7 @@ erDiagram
 ### user
 *   **Purpose**: Represents authenticated credentials and profile details.
 *   **Parent Entity**: `organization` (via `organization_id`).
-*   **Child Entities**: `assignment`, `comment`, `research_item`, `script_version`.
+*   **Child Entities**: `assignment`, `comment`, `research_item`, `script`.
 *   **Business Responsibility**: Manages system entry credentials, secures sessions via hashed passwords, holds custom profile pictures, and logs active participation metadata.
 
 ### membership (Logical Entity)
@@ -435,10 +445,10 @@ erDiagram
 *   **Business Responsibility**: Coordinates the creative stages (`IDEA` to `PUBLISHED`), priorities, due dates, and links related creative modules.
 
 ### assignment
-*   **Purpose**: Maps creator roles to content execution cards.
-*   **Parent Entity**: `content` (via `content_id`), `"user"` (via `user_id`).
+*   **Purpose**: Maps creators and tasks to content execution cards.
+*   **Parent Entity**: `content` (via `content_id`), `"user"` (via `assigned_to_user_id` and `assigned_by_user_id`).
 *   **Child Entities**: None.
-*   **Business Responsibility**: Outlines team task assignments (e.g., Writer, Editor) and progress tracking (`PENDING`, `IN_PROGRESS`, `COMPLETED`).
+*   **Business Responsibility**: Outlines team task assignments and progress states (`ASSIGNED` to `COMPLETED` or `CANCELLED`).
 
 ### task
 *   **Purpose**: Lightweight checklist sub-item under content cards.
@@ -485,7 +495,7 @@ erDiagram
     *   `brand` to `content` ($1:\text{Many}$): Valid. Each content card is owned by a single brand channel.
     *   `content` to metadata children (`task`, `asset`, `comment`, `research_item`) ($1:\text{Many}$): Valid. Supports multiple checklist items, files, and discussion logs grouped under the content card.
 *   **Strict Many-to-One / Many-to-Many Resolvers**:
-    *   `content` $\leftrightarrow$ `"user"` (Many-to-Many): Resolved cleanly via the `assignment` join table containing context fields (`role`, `status`).
+    *   `content` $\leftrightarrow$ `"user"` (Many-to-Many): Resolved cleanly via the `assignment` join table containing context fields (`assignment_type`, `status`).
     *   `script` $\leftrightarrow$ `"user"` (Many-to-One): Multiple script versions point to the user contributor who performed the save.
     *   `organization` $\leftrightarrow$ `"user"` (One-to-Many in V1): A user is physically mapped to one organization. 
 *   **Design Considerations & Safety Controls**:
