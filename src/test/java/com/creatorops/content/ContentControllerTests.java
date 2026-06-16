@@ -124,7 +124,7 @@ class ContentControllerTests {
         when(contentService.createContent(eq("tony@slay.com"), any(ContentRequest.class)))
                 .thenReturn(contentResponse);
 
-        mockMvc.perform(post("/api/contents")
+        mockMvc.perform(post("/api/v1/contents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(contentRequest)))
@@ -142,7 +142,7 @@ class ContentControllerTests {
         when(contentService.createContent(eq("rogers@slay.com"), any(ContentRequest.class)))
                 .thenReturn(contentResponse);
 
-        mockMvc.perform(post("/api/contents")
+        mockMvc.perform(post("/api/v1/contents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(contentRequest)))
@@ -154,7 +154,7 @@ class ContentControllerTests {
     void createContent_ContributorForbidden() throws Exception {
         mockAuth(contributorUser);
 
-        mockMvc.perform(post("/api/contents")
+        mockMvc.perform(post("/api/v1/contents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(contentRequest)))
@@ -175,7 +175,7 @@ class ContentControllerTests {
             null
         );
 
-        mockMvc.perform(post("/api/contents")
+        mockMvc.perform(post("/api/v1/contents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -200,7 +200,7 @@ class ContentControllerTests {
             }
             """;
 
-        mockMvc.perform(post("/api/contents")
+        mockMvc.perform(post("/api/v1/contents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
@@ -217,7 +217,7 @@ class ContentControllerTests {
         when(contentService.getContentById(eq(42L), eq("bruce@slay.com")))
                 .thenReturn(contentResponse);
 
-        mockMvc.perform(get("/api/contents/42")
+        mockMvc.perform(get("/api/v1/contents/42")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -231,7 +231,7 @@ class ContentControllerTests {
         when(contentService.searchContents(eq("bruce@slay.com"), eq(5L), eq(ContentStage.IDEA), eq(ContentType.BLOG), eq("Staff"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(contentResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/contents?brandId=5&stage=IDEA&type=BLOG&title=Staff")
+        mockMvc.perform(get("/api/v1/contents?brandId=5&stage=IDEA&type=BLOG&title=Staff")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -245,7 +245,7 @@ class ContentControllerTests {
         when(contentService.updateContent(eq(42L), any(ContentRequest.class), eq("tony@slay.com")))
                 .thenReturn(contentResponse);
 
-        mockMvc.perform(put("/api/contents/42")
+        mockMvc.perform(put("/api/v1/contents/42")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(contentRequest)))
@@ -258,7 +258,7 @@ class ContentControllerTests {
         mockAuth(adminUser);
         doNothing().when(contentService).deleteContent(eq(42L), eq("tony@slay.com"));
 
-        mockMvc.perform(delete("/api/contents/42")
+        mockMvc.perform(delete("/api/v1/contents/42")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
@@ -270,7 +270,7 @@ class ContentControllerTests {
         when(contentService.createContent(eq("rogers@slay.com"), any(ContentRequest.class)))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Cannot create content for a brand outside your organization."));
 
-        mockMvc.perform(post("/api/contents")
+        mockMvc.perform(post("/api/v1/contents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(contentRequest)))
@@ -286,7 +286,7 @@ class ContentControllerTests {
         when(contentService.getContentById(eq(42L), eq("bruce@slay.com")))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Cannot view content outside your organization."));
 
-        mockMvc.perform(get("/api/contents/42")
+        mockMvc.perform(get("/api/v1/contents/42")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -307,7 +307,7 @@ class ContentControllerTests {
             }
             """;
 
-        mockMvc.perform(post("/api/contents")
+        mockMvc.perform(post("/api/v1/contents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(malformedJson))

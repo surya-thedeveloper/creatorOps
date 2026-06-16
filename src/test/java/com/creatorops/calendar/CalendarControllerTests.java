@@ -91,7 +91,7 @@ class CalendarControllerTests {
                 eq("bruce@slay.com"), any(OffsetDateTime.class), any(OffsetDateTime.class), eq(5L), eq(ContentType.YOUTUBE_VIDEO), eq(ContentStage.SCHEDULED)))
                 .thenReturn(List.of(validEvent));
 
-        mockMvc.perform(get("/api/calendar?startDate=" + start + "&endDate=" + end + "&brandId=5&contentType=YOUTUBE_VIDEO&stage=SCHEDULED")
+        mockMvc.perform(get("/api/v1/calendar?startDate=" + start + "&endDate=" + end + "&brandId=5&contentType=YOUTUBE_VIDEO&stage=SCHEDULED")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].contentId").value(100))
@@ -108,7 +108,7 @@ class CalendarControllerTests {
                 eq("bruce@slay.com"), any(OffsetDateTime.class), any(OffsetDateTime.class), any(), any(), any()))
                 .thenThrow(new IllegalArgumentException("Validation failed: Start date must be before or equal to end date."));
 
-        mockMvc.perform(get("/api/calendar?startDate=" + start + "&endDate=" + end)
+        mockMvc.perform(get("/api/v1/calendar?startDate=" + start + "&endDate=" + end)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
@@ -122,7 +122,7 @@ class CalendarControllerTests {
         OffsetDateTime start = OffsetDateTime.now();
         OffsetDateTime end = OffsetDateTime.now().plusDays(10);
 
-        mockMvc.perform(get("/api/calendar?startDate=" + start + "&endDate=" + end + "&stage=INVALID_STAGE")
+        mockMvc.perform(get("/api/v1/calendar?startDate=" + start + "&endDate=" + end + "&stage=INVALID_STAGE")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
@@ -136,7 +136,7 @@ class CalendarControllerTests {
         when(calendarService.getUpcomingContent(eq("bruce@slay.com"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validEvent), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/calendar/upcoming")
+        mockMvc.perform(get("/api/v1/calendar/upcoming")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].contentId").value(100))
@@ -149,7 +149,7 @@ class CalendarControllerTests {
         when(calendarService.getScheduledContent(eq("bruce@slay.com"), eq(5L), eq(ContentType.YOUTUBE_VIDEO), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validEvent), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/calendar/scheduled?brandId=5&contentType=YOUTUBE_VIDEO")
+        mockMvc.perform(get("/api/v1/calendar/scheduled?brandId=5&contentType=YOUTUBE_VIDEO")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].contentId").value(100));
@@ -161,7 +161,7 @@ class CalendarControllerTests {
         when(calendarService.getPublishedContent(eq("bruce@slay.com"), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validEvent), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/calendar/published")
+        mockMvc.perform(get("/api/v1/calendar/published")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].contentId").value(100));
@@ -172,7 +172,7 @@ class CalendarControllerTests {
         mockAuth(contributorUser);
         when(calendarService.getOverdueContent(eq("bruce@slay.com"))).thenReturn(List.of(validEvent));
 
-        mockMvc.perform(get("/api/calendar/overdue")
+        mockMvc.perform(get("/api/v1/calendar/overdue")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].contentId").value(100));

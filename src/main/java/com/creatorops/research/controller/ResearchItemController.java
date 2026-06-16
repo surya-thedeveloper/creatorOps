@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
  * directly to the underlying transactional service layers.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class ResearchItemController {
 

@@ -85,7 +85,7 @@ class OrganizationControllerTests {
         when(userRepository.findByEmail("tony@slay.media")).thenReturn(Optional.of(adminUser));
         when(organizationService.createOrganization(any(OrganizationRequest.class))).thenReturn(orgResponse1);
 
-        mockMvc.perform(post("/api/organizations")
+        mockMvc.perform(post("/api/v1/organizations")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_admin_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -102,7 +102,7 @@ class OrganizationControllerTests {
         when(jwtService.extractUsername(anyString())).thenReturn("rogers@slay.media");
         when(userRepository.findByEmail("rogers@slay.media")).thenReturn(Optional.of(managerUser));
 
-        mockMvc.perform(post("/api/organizations")
+        mockMvc.perform(post("/api/v1/organizations")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_manager_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -113,7 +113,7 @@ class OrganizationControllerTests {
     void createOrganization_Unauthenticated_ReturnsUnauthorized() throws Exception {
         OrganizationRequest request = new OrganizationRequest("SLAY Media", "https://example.com/logo1.png");
 
-        mockMvc.perform(post("/api/organizations")
+        mockMvc.perform(post("/api/v1/organizations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
@@ -130,7 +130,7 @@ class OrganizationControllerTests {
         when(organizationService.updateOrganization(eq(1L), any(OrganizationRequest.class), eq("tony@slay.media")))
                 .thenReturn(updatedResponse);
 
-        mockMvc.perform(put("/api/organizations/1")
+        mockMvc.perform(put("/api/v1/organizations/1")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_admin_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -148,7 +148,7 @@ class OrganizationControllerTests {
         when(organizationService.updateOrganization(eq(2L), any(OrganizationRequest.class), eq("tony@slay.media")))
                 .thenThrow(new AccessDeniedException("Access denied"));
 
-        mockMvc.perform(put("/api/organizations/2")
+        mockMvc.perform(put("/api/v1/organizations/2")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_admin_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -163,7 +163,7 @@ class OrganizationControllerTests {
         when(jwtService.extractUsername(anyString())).thenReturn("tony@slay.media");
         when(userRepository.findByEmail("tony@slay.media")).thenReturn(Optional.of(adminUser));
 
-        mockMvc.perform(delete("/api/organizations/1")
+        mockMvc.perform(delete("/api/v1/organizations/1")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_admin_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
@@ -179,7 +179,7 @@ class OrganizationControllerTests {
         doThrow(new AccessDeniedException("Access denied"))
                 .when(organizationService).deleteOrganization(eq(2L), eq("tony@slay.media"));
 
-        mockMvc.perform(delete("/api/organizations/2")
+        mockMvc.perform(delete("/api/v1/organizations/2")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_admin_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())

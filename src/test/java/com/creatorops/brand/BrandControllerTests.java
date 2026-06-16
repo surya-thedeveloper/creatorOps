@@ -86,7 +86,7 @@ class BrandControllerTests {
         when(brandService.getBrands(eq("rogers@slay.com"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(brandResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/brands")
+        mockMvc.perform(get("/api/v1/brands")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -101,7 +101,7 @@ class BrandControllerTests {
         when(brandService.createBrand(eq("tony@slay.com"), any(BrandRequest.class)))
                 .thenReturn(brandResponse);
 
-        mockMvc.perform(post("/api/brands")
+        mockMvc.perform(post("/api/v1/brands")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(brandRequest)))
@@ -114,7 +114,7 @@ class BrandControllerTests {
     void createBrand_ManagerForbidden() throws Exception {
         mockAuth(managerUser);
 
-        mockMvc.perform(post("/api/brands")
+        mockMvc.perform(post("/api/v1/brands")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(brandRequest)))
@@ -127,7 +127,7 @@ class BrandControllerTests {
         when(brandService.updateBrand(eq(10L), any(BrandRequest.class), eq("tony@slay.com")))
                 .thenReturn(brandResponse);
 
-        mockMvc.perform(put("/api/brands/10")
+        mockMvc.perform(put("/api/v1/brands/10")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(brandRequest)))
@@ -140,7 +140,7 @@ class BrandControllerTests {
         mockAuth(adminUser);
         doNothing().when(brandService).deleteBrand(eq(10L), eq("tony@slay.com"));
 
-        mockMvc.perform(delete("/api/brands/10")
+        mockMvc.perform(delete("/api/v1/brands/10")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());

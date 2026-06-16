@@ -45,6 +45,8 @@ import java.time.OffsetDateTime;
 @Service
 public class TaskServiceImpl implements TaskService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TaskServiceImpl.class);
+
     private final TaskRepository taskRepository;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
@@ -105,6 +107,9 @@ public class TaskServiceImpl implements TaskService {
         );
 
         Task saved = taskRepository.save(task);
+        org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
+        log.info("Created task: title={}, assignmentId={}", saved.getTitle(), saved.getAssignment().getId());
+        org.slf4j.MDC.remove("entityId");
 
         // Record in timeline
         activityService.record(
@@ -204,6 +209,9 @@ public class TaskServiceImpl implements TaskService {
         task.setDueDate(request.dueDate());
 
         Task updated = taskRepository.save(task);
+        org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
+        log.info("Updated task: title={}, priority={}, assignedToUserId={}", updated.getTitle(), updated.getPriority(), updated.getAssignedToUser().getId());
+        org.slf4j.MDC.remove("entityId");
 
         // Record in timeline
         activityService.record(
@@ -251,6 +259,9 @@ public class TaskServiceImpl implements TaskService {
         }
 
         Task updated = taskRepository.save(task);
+        org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
+        log.info("Updated task status: oldStatus={}, newStatus={}", oldStatus, newStatus);
+        org.slf4j.MDC.remove("entityId");
 
         // Record in timeline
         activityService.record(
@@ -295,6 +306,10 @@ public class TaskServiceImpl implements TaskService {
             "Task '" + task.getTitle() + "' was deleted",
             null
         );
+
+        org.slf4j.MDC.put("entityId", String.valueOf(task.getId()));
+        log.info("Deleted task: taskId={}", task.getId());
+        org.slf4j.MDC.remove("entityId");
 
         taskRepository.delete(task);
     }

@@ -72,6 +72,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    if (userPrincipal.getId() != null) {
+                        org.slf4j.MDC.put("userId", String.valueOf(userPrincipal.getId()));
+                    }
+                    if (userPrincipal.getOrganizationId() != null) {
+                        org.slf4j.MDC.put("organizationId", String.valueOf(userPrincipal.getOrganizationId()));
+                    }
                 }
             }
         } catch (Exception e) {

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * REST controller exposing Task endpoints.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class TaskController {
 

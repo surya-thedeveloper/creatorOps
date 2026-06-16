@@ -129,7 +129,7 @@ class ResearchItemControllerTests {
         when(researchItemService.createResearchItem(eq(42L), eq("bruce@slay.com"), any(ResearchItemRequest.class)))
                 .thenReturn(noteResponse);
 
-        mockMvc.perform(post("/api/contents/42/research")
+        mockMvc.perform(post("/api/v1/contents/42/research")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(noteRequest)))
@@ -146,7 +146,7 @@ class ResearchItemControllerTests {
         when(researchItemService.createResearchItem(eq(42L), eq("bruce@slay.com"), any(ResearchItemRequest.class)))
                 .thenReturn(linkResponse);
 
-        mockMvc.perform(post("/api/contents/42/research")
+        mockMvc.perform(post("/api/v1/contents/42/research")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(linkRequest)))
@@ -166,7 +166,7 @@ class ResearchItemControllerTests {
             null
         );
 
-        mockMvc.perform(post("/api/contents/42/research")
+        mockMvc.perform(post("/api/v1/contents/42/research")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -187,7 +187,7 @@ class ResearchItemControllerTests {
             "" // Missing URL
         );
 
-        mockMvc.perform(post("/api/contents/42/research")
+        mockMvc.perform(post("/api/v1/contents/42/research")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -208,7 +208,7 @@ class ResearchItemControllerTests {
             null
         );
 
-        mockMvc.perform(post("/api/contents/42/research")
+        mockMvc.perform(post("/api/v1/contents/42/research")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -225,7 +225,7 @@ class ResearchItemControllerTests {
         when(researchItemService.getResearchItemById(eq(100L), eq("bruce@slay.com")))
                 .thenReturn(noteResponse);
 
-        mockMvc.perform(get("/api/research/100")
+        mockMvc.perform(get("/api/v1/research/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -239,7 +239,7 @@ class ResearchItemControllerTests {
         when(researchItemService.getResearchItemById(eq(100L), eq("bruce@slay.com")))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Cannot view research outside your organization."));
 
-        mockMvc.perform(get("/api/research/100")
+        mockMvc.perform(get("/api/v1/research/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -253,7 +253,7 @@ class ResearchItemControllerTests {
         when(researchItemService.getResearchItemsByContent(eq(42L), eq(ResearchItemType.NOTE), eq("bruce@slay.com"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(noteResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/contents/42/research?type=NOTE")
+        mockMvc.perform(get("/api/v1/contents/42/research?type=NOTE")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -267,7 +267,7 @@ class ResearchItemControllerTests {
         when(researchItemService.updateResearchItem(eq(100L), any(ResearchItemRequest.class), eq("bruce@slay.com")))
                 .thenReturn(noteResponse);
 
-        mockMvc.perform(put("/api/research/100")
+        mockMvc.perform(put("/api/v1/research/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(noteRequest)))
@@ -280,7 +280,7 @@ class ResearchItemControllerTests {
         mockAuth(contributorUser);
         doNothing().when(researchItemService).deleteResearchItem(eq(100L), eq("bruce@slay.com"));
 
-        mockMvc.perform(delete("/api/research/100")
+        mockMvc.perform(delete("/api/v1/research/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());

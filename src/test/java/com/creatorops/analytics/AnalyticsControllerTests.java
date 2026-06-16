@@ -78,7 +78,7 @@ class AnalyticsControllerTests {
         );
         when(analyticsService.getDashboardSummary("tony@slay.com")).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/analytics/dashboard")
+        mockMvc.perform(get("/api/v1/analytics/dashboard")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -107,7 +107,7 @@ class AnalyticsControllerTests {
         ContentAnalyticsResponse mockResponse = new ContentAnalyticsResponse(stageMap, typeMap, priorityMap);
         when(analyticsService.getContentAnalytics("tony@slay.com")).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/analytics/content")
+        mockMvc.perform(get("/api/v1/analytics/content")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -127,7 +127,7 @@ class AnalyticsControllerTests {
         AssignmentAnalyticsResponse mockResponse = new AssignmentAnalyticsResponse(statusMap, typeMap);
         when(analyticsService.getAssignmentAnalytics("tony@slay.com")).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/analytics/assignments")
+        mockMvc.perform(get("/api/v1/analytics/assignments")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -146,7 +146,7 @@ class AnalyticsControllerTests {
         TaskAnalyticsResponse mockResponse = new TaskAnalyticsResponse(statusMap, priorityMap, 3);
         when(analyticsService.getTaskAnalytics("tony@slay.com")).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/analytics/tasks")
+        mockMvc.perform(get("/api/v1/analytics/tasks")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -163,7 +163,7 @@ class AnalyticsControllerTests {
         );
         when(analyticsService.getPublishingAnalytics("tony@slay.com")).thenReturn(mockResponse);
 
-        mockMvc.perform(get("/api/analytics/publishing")
+        mockMvc.perform(get("/api/v1/analytics/publishing")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -178,7 +178,7 @@ class AnalyticsControllerTests {
     @Test
     void unauthenticated_ReturnsUnauthorizedOrForbidden() throws Exception {
         // Accessing endpoint without header should be rejected by Spring Security Filter Chain
-        mockMvc.perform(get("/api/analytics/dashboard")
+        mockMvc.perform(get("/api/v1/analytics/dashboard")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized()); // Or status().isForbidden() depending on EntryPoint config
     }

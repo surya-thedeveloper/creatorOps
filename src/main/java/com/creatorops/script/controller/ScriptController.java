@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
  * Receives actions from the user interface to save new script versions, update pointers, and list versions.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class ScriptController {
 

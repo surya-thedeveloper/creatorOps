@@ -143,7 +143,7 @@ class TaskControllerTests {
         when(taskService.createTask(eq(100L), eq("tony@slay.com"), any(TaskRequest.class)))
                 .thenReturn(validResponse);
 
-        mockMvc.perform(post("/api/assignments/100/tasks")
+        mockMvc.perform(post("/api/v1/assignments/100/tasks")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -165,7 +165,7 @@ class TaskControllerTests {
             OffsetDateTime.now().plusDays(5)
         );
 
-        mockMvc.perform(post("/api/assignments/100/tasks")
+        mockMvc.perform(post("/api/v1/assignments/100/tasks")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -181,7 +181,7 @@ class TaskControllerTests {
         mockAuth(contributorUser);
         when(taskService.getTaskById(eq(500L), eq("bruce@slay.com"))).thenReturn(validResponse);
 
-        mockMvc.perform(get("/api/tasks/500")
+        mockMvc.perform(get("/api/v1/tasks/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(500))
@@ -194,7 +194,7 @@ class TaskControllerTests {
         when(taskService.getTasksByAssignment(eq(100L), eq("bruce@slay.com"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/assignments/100/tasks")
+        mockMvc.perform(get("/api/v1/assignments/100/tasks")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(500))
@@ -207,7 +207,7 @@ class TaskControllerTests {
         when(taskService.getMyTasks(eq("bruce@slay.com"), eq(TaskStatus.TODO), eq(TaskPriority.HIGH), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/tasks/my?status=TODO&priority=HIGH")
+        mockMvc.perform(get("/api/v1/tasks/my?status=TODO&priority=HIGH")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(500))
@@ -220,7 +220,7 @@ class TaskControllerTests {
         when(taskService.updateTask(eq(500L), eq("tony@slay.com"), any(TaskRequest.class)))
                 .thenReturn(validResponse);
 
-        mockMvc.perform(put("/api/tasks/500")
+        mockMvc.perform(put("/api/v1/tasks/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -244,7 +244,7 @@ class TaskControllerTests {
         when(taskService.updateTaskStatus(eq(500L), eq("bruce@slay.com"), any(TaskStatusRequest.class)))
                 .thenReturn(doneResponse);
 
-        mockMvc.perform(patch("/api/tasks/500/status")
+        mockMvc.perform(patch("/api/v1/tasks/500/status")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusRequest)))
@@ -257,7 +257,7 @@ class TaskControllerTests {
         mockAuth(managerUser);
         doNothing().when(taskService).deleteTask(eq(500L), eq("tony@slay.com"));
 
-        mockMvc.perform(delete("/api/tasks/500")
+        mockMvc.perform(delete("/api/v1/tasks/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isNoContent());
     }
@@ -268,7 +268,7 @@ class TaskControllerTests {
         doThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Only ADMIN or MANAGER can manage tasks."))
                 .when(taskService).deleteTask(eq(500L), eq("bruce@slay.com"));
 
-        mockMvc.perform(delete("/api/tasks/500")
+        mockMvc.perform(delete("/api/v1/tasks/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))

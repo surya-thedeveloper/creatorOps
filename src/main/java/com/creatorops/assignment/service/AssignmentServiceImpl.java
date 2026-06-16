@@ -41,6 +41,8 @@ import com.creatorops.activity.service.ActivityService;
 @Service
 public class AssignmentServiceImpl implements AssignmentService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AssignmentServiceImpl.class);
+
     private final AssignmentRepository assignmentRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
@@ -99,6 +101,9 @@ public class AssignmentServiceImpl implements AssignmentService {
         assignment.setDueDate(request.dueDate());
 
         Assignment saved = assignmentRepository.save(assignment);
+        org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
+        log.info("Created assignment: contentId={}, assignedToUserId={}, type={}", saved.getContent().getId(), saved.getAssignedToUser().getId(), saved.getAssignmentType());
+        org.slf4j.MDC.remove("entityId");
         activityService.record(
             content,
             creator,
@@ -200,6 +205,9 @@ public class AssignmentServiceImpl implements AssignmentService {
         assignment.setDueDate(request.dueDate());
 
         Assignment updated = assignmentRepository.save(assignment);
+        org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
+        log.info("Updated assignment: contentId={}, assignedToUserId={}, type={}", updated.getContent().getId(), updated.getAssignedToUser().getId(), updated.getAssignmentType());
+        org.slf4j.MDC.remove("entityId");
         activityService.record(
             updated.getContent(),
             updater,
@@ -253,6 +261,9 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
 
         Assignment updated = assignmentRepository.save(assignment);
+        org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
+        log.info("Updated assignment status: oldStatus={}, newStatus={}", oldStatus, newStatus);
+        org.slf4j.MDC.remove("entityId");
         activityService.record(
             updated.getContent(),
             updater,
@@ -293,6 +304,10 @@ public class AssignmentServiceImpl implements AssignmentService {
             "Assignment for " + assignment.getAssignmentType().name() + " assigned to " + assignment.getAssignedToUser().getName() + " deleted",
             null
         );
+
+        org.slf4j.MDC.put("entityId", String.valueOf(assignment.getId()));
+        log.info("Deleted assignment: assignmentId={}", assignment.getId());
+        org.slf4j.MDC.remove("entityId");
 
         assignmentRepository.delete(assignment);
     }

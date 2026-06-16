@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.*;
  * </ul>
  */
 @RestController
-@RequestMapping("/api/contents")
+@RequestMapping("/api/v1/contents")
 public class ContentController {
 
     private final ContentService contentService;

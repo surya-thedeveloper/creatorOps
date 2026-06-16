@@ -131,7 +131,7 @@ class AssignmentControllerTests {
         when(assignmentService.createAssignment(eq(42L), eq("tony@slay.com"), any(AssignmentRequest.class)))
                 .thenReturn(validResponse);
 
-        mockMvc.perform(post("/api/contents/42/assignments")
+        mockMvc.perform(post("/api/v1/contents/42/assignments")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -152,7 +152,7 @@ class AssignmentControllerTests {
             OffsetDateTime.now().plusDays(5)
         );
 
-        mockMvc.perform(post("/api/contents/42/assignments")
+        mockMvc.perform(post("/api/v1/contents/42/assignments")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -176,7 +176,7 @@ class AssignmentControllerTests {
         when(assignmentService.createAssignment(eq(42L), eq("tony@slay.com"), any(AssignmentRequest.class)))
                 .thenThrow(new IllegalArgumentException("Validation failed: Due date cannot be in the past."));
 
-        mockMvc.perform(post("/api/contents/42/assignments")
+        mockMvc.perform(post("/api/v1/contents/42/assignments")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pastRequest)))
@@ -190,7 +190,7 @@ class AssignmentControllerTests {
         mockAuth(contributorUser);
         when(assignmentService.getAssignmentById(eq(100L), eq("bruce@slay.com"))).thenReturn(validResponse);
 
-        mockMvc.perform(get("/api/assignments/100")
+        mockMvc.perform(get("/api/v1/assignments/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -204,7 +204,7 @@ class AssignmentControllerTests {
         when(assignmentService.getAssignmentById(eq(100L), eq("thor@other.com")))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Assignment belongs to a different organization."));
 
-        mockMvc.perform(get("/api/assignments/100")
+        mockMvc.perform(get("/api/v1/assignments/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -225,7 +225,7 @@ class AssignmentControllerTests {
         when(assignmentService.updateAssignmentStatus(eq(100L), eq("bruce@slay.com"), any(AssignmentStatusRequest.class)))
                 .thenReturn(updatedResponse);
 
-        mockMvc.perform(patch("/api/assignments/100/status")
+        mockMvc.perform(patch("/api/v1/assignments/100/status")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusRequest)))
@@ -241,7 +241,7 @@ class AssignmentControllerTests {
         when(assignmentService.updateAssignmentStatus(eq(100L), eq("bruce@slay.com"), any(AssignmentStatusRequest.class)))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Contributors can only update the status of assignments assigned to themselves."));
 
-        mockMvc.perform(patch("/api/assignments/100/status")
+        mockMvc.perform(patch("/api/v1/assignments/100/status")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusRequest)))
@@ -255,7 +255,7 @@ class AssignmentControllerTests {
         when(assignmentService.getMyAssignments(eq("bruce@slay.com"), eq(AssignmentStatus.ASSIGNED), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/assignments/my?status=ASSIGNED")
+        mockMvc.perform(get("/api/v1/assignments/my?status=ASSIGNED")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -268,7 +268,7 @@ class AssignmentControllerTests {
         mockAuth(managerUser);
         doNothing().when(assignmentService).deleteAssignment(eq(100L), eq("tony@slay.com"));
 
-        mockMvc.perform(delete("/api/assignments/100")
+        mockMvc.perform(delete("/api/v1/assignments/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
@@ -280,7 +280,7 @@ class AssignmentControllerTests {
         doThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Only ADMIN or MANAGER can manage assignments."))
                 .when(assignmentService).deleteAssignment(eq(100L), eq("bruce@slay.com"));
 
-        mockMvc.perform(delete("/api/assignments/100")
+        mockMvc.perform(delete("/api/v1/assignments/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())

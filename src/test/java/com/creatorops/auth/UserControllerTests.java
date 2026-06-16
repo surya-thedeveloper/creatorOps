@@ -70,7 +70,7 @@ class UserControllerTests {
         mockAuthentication();
         when(authService.getCurrentUser("surya@example.com")).thenReturn(userResponse);
 
-        mockMvc.perform(get("/api/users/profile")
+        mockMvc.perform(get("/api/v1/users/profile")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -81,7 +81,7 @@ class UserControllerTests {
 
     @Test
     void getProfile_Unauthorized() throws Exception {
-        mockMvc.perform(get("/api/users/profile")
+        mockMvc.perform(get("/api/v1/users/profile")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
@@ -94,7 +94,7 @@ class UserControllerTests {
 
         when(authService.updateProfile(eq("surya@example.com"), any(UpdateProfileRequest.class))).thenReturn(updatedResponse);
 
-        mockMvc.perform(put("/api/users/profile")
+        mockMvc.perform(put("/api/v1/users/profile")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -111,7 +111,7 @@ class UserControllerTests {
 
         doNothing().when(authService).changePassword(eq("surya@example.com"), any(ChangePasswordRequest.class));
 
-        mockMvc.perform(post("/api/users/change-password")
+        mockMvc.perform(post("/api/v1/users/change-password")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -126,7 +126,7 @@ class UserControllerTests {
 
         doNothing().when(authService).initiatePasswordReset(any(ForgotPasswordRequest.class));
 
-        mockMvc.perform(post("/api/auth/forgot-password")
+        mockMvc.perform(post("/api/v1/auth/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -140,7 +140,7 @@ class UserControllerTests {
 
         doNothing().when(authService).resetPassword(any(ResetPasswordRequest.class));
 
-        mockMvc.perform(post("/api/auth/reset-password")
+        mockMvc.perform(post("/api/v1/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

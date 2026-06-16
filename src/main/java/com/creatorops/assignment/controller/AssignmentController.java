@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
  * Routes HTTP allocations, status changes, lists, and deletions to transactional services.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class AssignmentController {
 

@@ -84,6 +84,30 @@ We maintain clean, detailed architecture and product specifications to guide dev
 
 ---
 
+## 🔌 API Endpoint Examples
+
+All core REST endpoints are versioned under `/api/v1` to support reliable API contract evolution.
+
+### Authentication & Profiles
+*   **POST** `/api/v1/auth/register` — Register a new account
+*   **POST** `/api/v1/auth/login` — Authenticate and receive stateless access/refresh tokens
+*   **POST** `/api/v1/auth/refresh` — Refresh expired access token
+*   **GET** `/api/v1/users/profile` — Get current user settings
+*   **PUT** `/api/v1/users/profile` — Update name or avatar URL
+
+### Content Planning & Collaboration
+*   **GET** `/api/v1/contents` — Query content cards with tenancy isolation (supports paging/sorting)
+*   **POST** `/api/v1/contents` — Create a new content card
+*   **POST** `/api/v1/ai/contents/{id}/brainstorm` — Trigger Gemini AI brainstorming report
+*   **POST** `/api/v1/ai/contents/{id}/generate-script` — Trigger Gemini AI conversational script drafting
+
+### System Monitoring & Actuator
+*   **GET** `/actuator/health` — Returns application status (`UP`)
+*   **GET** `/actuator/info` — Exposes build version, stage, and application metadata
+*   **GET** `/actuator/metrics` — Exposes JVM and HTTP execution parameters
+
+---
+
 ## 📈 Project Status
 
 - [x] Documentation & Architecture Phase (Completed)

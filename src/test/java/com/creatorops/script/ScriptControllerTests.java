@@ -137,7 +137,7 @@ class ScriptControllerTests {
         when(scriptService.createScript(eq(42L), eq("bruce@slay.com"), any(ScriptRequest.class)))
                 .thenReturn(internalResponseV1);
 
-        mockMvc.perform(post("/api/contents/42/scripts")
+        mockMvc.perform(post("/api/v1/contents/42/scripts")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(internalRequest)))
@@ -154,7 +154,7 @@ class ScriptControllerTests {
         when(scriptService.createScript(eq(42L), eq("bruce@slay.com"), any(ScriptRequest.class)))
                 .thenReturn(googleDocResponseV2);
 
-        mockMvc.perform(post("/api/contents/42/scripts")
+        mockMvc.perform(post("/api/v1/contents/42/scripts")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(googleDocRequest)))
@@ -176,7 +176,7 @@ class ScriptControllerTests {
             null
         );
 
-        mockMvc.perform(post("/api/contents/42/scripts")
+        mockMvc.perform(post("/api/v1/contents/42/scripts")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -198,7 +198,7 @@ class ScriptControllerTests {
             null
         );
 
-        mockMvc.perform(post("/api/contents/42/scripts")
+        mockMvc.perform(post("/api/v1/contents/42/scripts")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -214,7 +214,7 @@ class ScriptControllerTests {
         mockAuth(creatorUser);
         when(scriptService.getScriptById(eq(100L), eq("bruce@slay.com"))).thenReturn(internalResponseV1);
 
-        mockMvc.perform(get("/api/scripts/100")
+        mockMvc.perform(get("/api/v1/scripts/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -228,7 +228,7 @@ class ScriptControllerTests {
         when(scriptService.getScriptById(eq(100L), eq("bruce@slay.com")))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Script belongs to a different organization."));
 
-        mockMvc.perform(get("/api/scripts/100")
+        mockMvc.perform(get("/api/v1/scripts/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -242,7 +242,7 @@ class ScriptControllerTests {
         when(scriptService.getScriptsByContent(eq(42L), eq("bruce@slay.com"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(googleDocResponseV2, internalResponseV1), PageRequest.of(0, 20), 2));
 
-        mockMvc.perform(get("/api/contents/42/scripts")
+        mockMvc.perform(get("/api/v1/contents/42/scripts")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -257,7 +257,7 @@ class ScriptControllerTests {
         when(scriptService.updateScript(eq(100L), any(ScriptRequest.class), eq("bruce@slay.com")))
                 .thenReturn(internalResponseV1);
 
-        mockMvc.perform(put("/api/scripts/100")
+        mockMvc.perform(put("/api/v1/scripts/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(internalRequest)))
@@ -270,7 +270,7 @@ class ScriptControllerTests {
         mockAuth(creatorUser);
         doNothing().when(scriptService).deleteScript(eq(100L), eq("bruce@slay.com"));
 
-        mockMvc.perform(delete("/api/scripts/100")
+        mockMvc.perform(delete("/api/v1/scripts/100")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());

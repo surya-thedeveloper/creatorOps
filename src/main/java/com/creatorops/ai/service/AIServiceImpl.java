@@ -59,6 +59,8 @@ import java.util.List;
 @Service
 public class AIServiceImpl implements AIService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AIServiceImpl.class);
+
     private final UserRepository userRepository;
     private final ContentRepository contentRepository;
     private final ResearchItemRepository researchItemRepository;
@@ -130,6 +132,9 @@ public class AIServiceImpl implements AIService {
         );
 
         ResearchItem saved = researchItemRepository.save(brainstormItem);
+        org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
+        log.info("AI brainstorm generated: title={}, contentId={}", saved.getTitle(), contentId);
+        org.slf4j.MDC.remove("entityId");
 
         // 4. Record Activity timeline event
         activityService.record(
@@ -177,6 +182,9 @@ public class AIServiceImpl implements AIService {
         );
 
         ScriptResponse scriptResponse = scriptService.createScript(contentId, userEmail, scriptRequest);
+        org.slf4j.MDC.put("entityId", String.valueOf(scriptResponse.id()));
+        log.info("AI script draft generated: version={}, contentId={}", scriptResponse.version(), contentId);
+        org.slf4j.MDC.remove("entityId");
 
         // 4. Record AI activity log event
         activityService.record(

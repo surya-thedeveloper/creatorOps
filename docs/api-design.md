@@ -9,7 +9,7 @@ This document details the REST API design conventions, authorization integration
 The CreatorOps API is built following standard RESTful design practices:
 
 1.  **Transport Protocol**: All API communication must be encrypted over HTTPS.
-2.  **Resource Naming**: Plural nouns for resource identifiers (e.g., `/api/brands`, `/api/contents`).
+2.  **Resource Naming**: Plural nouns for resource identifiers (e.g., `/api/v1/brands`, `/api/v1/contents`).
 3.  **HTTP Verbs**:
     *   `GET`: Retrieve a resource or a list of resources. Safe and idempotent.
     *   `POST`: Create a new resource. Non-idempotent.
@@ -32,7 +32,7 @@ Authorization: Bearer <JWT_TOKEN>
 ```
 
 ### Authentication Lifecycle
-*   **Token Retrieval**: Clients request tokens by providing email credentials to the public login endpoint `/api/auth/login`.
+*   **Token Retrieval**: Clients request tokens by providing email credentials to the public login endpoint `/api/v1/auth/login`.
 *   **Token Duration**: Access tokens are signed using SHA-256 HMAC and have a validity period of 24 hours.
 *   **Claims Structure**:
     ```json
@@ -101,7 +101,7 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
       "title": "Validation Failed",
       "status": 400,
       "detail": "One or more inputs in your payload failed safety validations.",
-      "instance": "/api/contents",
+      "instance": "/api/v1/contents",
       "errors": [
         {
           "field": "title",
@@ -117,7 +117,7 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
       "title": "Access Denied",
       "status": 403,
       "detail": "You do not have permission to view this resource.",
-      "instance": "/api/organizations/1/brands"
+      "instance": "/api/v1/organizations/1/brands"
     }
     ```
 
@@ -126,7 +126,7 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
 ## 4. Endpoint Catalog
 
 ### 4.1. Auth Endpoint (Public)
-*   **`POST /api/auth/login`**: Validate credentials and fetch a JWT token.
+*   **`POST /api/v1/auth/login`**: Validate credentials and fetch a JWT token.
     *   *Request Payload*:
         ```json
         {
@@ -150,7 +150,7 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
         ```
 
 ### 4.2. Organization Management (Admin only)
-*   **`POST /api/organizations`**: Register a new Organization.
+*   **`POST /api/v1/organizations`**: Register a new Organization.
     *   *Request Payload*:
         ```json
         {
@@ -158,12 +158,12 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "logoUrl": "https://example.com/logos/slay-media.png"
         }
         ```
-*   **`PUT /api/organizations/{id}`**: Edit details of an Organization.
-*   **`DELETE /api/organizations/{id}`**: Soft delete an Organization.
+*   **`PUT /api/v1/organizations/{id}`**: Edit details of an Organization.
+*   **`DELETE /api/v1/organizations/{id}`**: Soft delete an Organization.
 
 ### 4.3. Brand Management
-*   **`GET /api/brands`**: Fetch all active brands under the user's Organization.
-*   **`POST /api/brands`**: Create a new Brand (Admin only).
+*   **`GET /api/v1/brands`**: Fetch all active brands under the user's Organization.
+*   **`POST /api/v1/brands`**: Create a new Brand (Admin only).
     *   *Request Payload*:
         ```json
         {
@@ -172,14 +172,14 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "logoUrl": "https://example.com/logos/slay-fashion.png"
         }
         ```
-*   **`PUT /api/brands/{id}`**: Edit a Brand (Admin only).
-*   **`DELETE /api/brands/{id}`**: Soft delete/Archive a Brand (Admin only).
+*   **`PUT /api/v1/brands/{id}`**: Edit a Brand (Admin only).
+*   **`DELETE /api/v1/brands/{id}`**: Soft delete/Archive a Brand (Admin only).
 
 ### 4.4. Content Management
-*   **`GET /api/contents`**: Fetch content cards. Supports filters: `brandId`, `stage`, `type`, `assigneeId`.
+*   **`GET /api/v1/contents`**: Fetch content cards. Supports filters: `brandId`, `stage`, `type`, `assigneeId`.
     *   *Request Parameters*: `?brandId=5&stage=IDEA&page=0&size=10&sort=dueDate,asc`
-*   **`GET /api/contents/{id}`**: Get details of a Content card.
-*   **`POST /api/contents`**: Create a content card. (Admin / Manager only).
+*   **`GET /api/v1/contents/{id}`**: Get details of a Content card.
+*   **`POST /api/v1/contents`**: Create a content card. (Admin / Manager only).
     *   *Request Payload*:
         ```json
         {
@@ -192,12 +192,12 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "dueDate": "2026-07-05T00:00:00Z"
         }
         ```
-*   **`PUT /api/contents/{id}`**: Update content details or advance stages. (Admin / Manager only).
-*   **`DELETE /api/contents/{id}`**: Soft delete a content card. (Admin / Manager only).
+*   **`PUT /api/v1/contents/{id}`**: Update content details or advance stages. (Admin / Manager only).
+*   **`DELETE /api/v1/contents/{id}`**: Soft delete a content card. (Admin / Manager only).
 
 ### 4.5. Research Module
-*   **`GET /api/contents/{contentId}/research`**: List research cards for a content card.
-*   **`POST /api/contents/{contentId}/research`**: Add research item (Note, Link, or AI response).
+*   **`GET /api/v1/contents/{contentId}/research`**: List research cards for a content card.
+*   **`POST /api/v1/contents/{contentId}/research`**: Add research item (Note, Link, or AI response).
     *   *Request Payload*:
         ```json
         {
@@ -207,13 +207,13 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "contentText": "Video pacing and hook structure ideas"
         }
         ```
-*   **`GET /api/research/{id}`**: Get details of a single research card.
-*   **`PUT /api/research/{id}`**: Update a research card.
-*   **`DELETE /api/research/{id}`**: Hard delete a research card.
+*   **`GET /api/v1/research/{id}`**: Get details of a single research card.
+*   **`PUT /api/v1/research/{id}`**: Update a research card.
+*   **`DELETE /api/v1/research/{id}`**: Hard delete a research card.
 
 ### 4.6. Script Module
-*   **`GET /api/contents/{contentId}/scripts`**: List all script versions for a content card.
-*   **`POST /api/contents/{contentId}/scripts`**: Push a new script draft snapshot.
+*   **`GET /api/v1/contents/{contentId}/scripts`**: List all script versions for a content card.
+*   **`POST /api/v1/contents/{contentId}/scripts`**: Push a new script draft snapshot.
     *   *Request Payload*:
         ```json
         {
@@ -224,14 +224,14 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "generatedScript": "Welcome to this tutorial on clean code..."
         }
         ```
-*   **`GET /api/scripts/{id}`**: Retrieve script draft details.
-*   **`PUT /api/scripts/{id}`**: Update a script version.
-*   **`DELETE /api/scripts/{id}`**: Hard delete a script draft.
+*   **`GET /api/v1/scripts/{id}`**: Retrieve script draft details.
+*   **`PUT /api/v1/scripts/{id}`**: Update a script version.
+*   **`DELETE /api/v1/scripts/{id}`**: Hard delete a script draft.
 
 ### 4.7. Assignments & Tasks
 
 #### Assignments
-*   **`POST /api/contents/{contentId}/assignments`**: Create an assignment mapping a contributor role to content.
+*   **`POST /api/v1/contents/{contentId}/assignments`**: Create an assignment mapping a contributor role to content.
     *   *Request Payload*:
         ```json
         {
@@ -241,21 +241,21 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "dueDate": "2026-06-30T12:00:00Z"
         }
         ```
-*   **`GET /api/contents/{contentId}/assignments`**: Get all assignments for a content card.
-*   **`GET /api/assignments/my`**: Get current contributor's assignments. Optional query: `?status=ASSIGNED`
-*   **`GET /api/assignments/{id}`**: Fetch single assignment details.
-*   **`PUT /api/assignments/{id}`**: Update assignment user, type, notes, or due date. (Admin/Manager only).
-*   **`PATCH /api/assignments/{id}/status`**: Update assignment execution status (e.g. `IN_PROGRESS`, `COMPLETED`, `BLOCKED`).
+*   **`GET /api/v1/contents/{contentId}/assignments`**: Get all assignments for a content card.
+*   **`GET /api/v1/assignments/my`**: Get current contributor's assignments. Optional query: `?status=ASSIGNED`
+*   **`GET /api/v1/assignments/{id}`**: Fetch single assignment details.
+*   **`PUT /api/v1/assignments/{id}`**: Update assignment user, type, notes, or due date. (Admin/Manager only).
+*   **`PATCH /api/v1/assignments/{id}/status`**: Update assignment execution status (e.g. `IN_PROGRESS`, `COMPLETED`, `BLOCKED`).
     *   *Request Payload*:
         ```json
         {
           "status": "COMPLETED"
         }
         ```
-*   **`DELETE /api/assignments/{id}`**: Hard delete an assignment. (Admin/Manager only).
+*   **`DELETE /api/v1/assignments/{id}`**: Hard delete an assignment. (Admin/Manager only).
 
 #### Tasks (Checklist items under assignments)
-*   **`POST /api/assignments/{assignmentId}/tasks`**: Append checklist task.
+*   **`POST /api/v1/assignments/{assignmentId}/tasks`**: Append checklist task.
     *   *Request Payload*:
         ```json
         {
@@ -266,21 +266,21 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "dueDate": "2026-06-25T12:00:00Z"
         }
         ```
-*   **`GET /api/assignments/{assignmentId}/tasks`**: List tasks under an assignment.
-*   **`GET /api/tasks/{id}`**: Get single task details.
-*   **`GET /api/tasks/my`**: Get current contributor's checklist tasks. Optional queries: `?status=TODO&priority=HIGH`
-*   **`PUT /api/tasks/{id}`**: Update full task details. (Admin/Manager only).
-*   **`PATCH /api/tasks/{id}/status`**: Toggle task execution status (`TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`).
+*   **`GET /api/v1/assignments/{assignmentId}/tasks`**: List tasks under an assignment.
+*   **`GET /api/v1/tasks/{id}`**: Get single task details.
+*   **`GET /api/v1/tasks/my`**: Get current contributor's checklist tasks. Optional queries: `?status=TODO&priority=HIGH`
+*   **`PUT /api/v1/tasks/{id}`**: Update full task details. (Admin/Manager only).
+*   **`PATCH /api/v1/tasks/{id}/status`**: Toggle task execution status (`TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`).
     *   *Request Payload*:
         ```json
         {
           "status": "DONE"
         }
         ```
-*   **`DELETE /api/tasks/{id}`**: Hard delete a task. (Admin/Manager only).
+*   **`DELETE /api/v1/tasks/{id}`**: Hard delete a task. (Admin/Manager only).
 
 ### 4.8. Asset Tracking
-*   **`POST /api/contents/{contentId}/assets`**: Register a media asset reference.
+*   **`POST /api/v1/contents/{contentId}/assets`**: Register a media asset reference.
     *   *Request Payload*:
         ```json
         {
@@ -294,29 +294,29 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
           "version": 1
         }
         ```
-*   **`GET /api/contents/{contentId}/assets`**: Get all assets associated with content.
-*   **`GET /api/assets/{id}`**: Fetch single asset details.
-*   **`PUT /api/assets/{id}`**: Update asset metadata.
-*   **`DELETE /api/assets/{id}`**: Hard delete an asset reference.
+*   **`GET /api/v1/contents/{contentId}/assets`**: Get all assets associated with content.
+*   **`GET /api/v1/assets/{id}`**: Fetch single asset details.
+*   **`PUT /api/v1/assets/{id}`**: Update asset metadata.
+*   **`DELETE /api/v1/assets/{id}`**: Hard delete an asset reference.
 
 ### 4.9. Activity Timeline
-*   **`GET /api/contents/{contentId}/activities`**: Fetch content audit logs chronologically (sorted by newest first by default).
-*   **`GET /api/activities/{id}`**: Retrieve detailed activity log entry by ID.
+*   **`GET /api/v1/contents/{contentId}/activities`**: Fetch content audit logs chronologically (sorted by newest first by default).
+*   **`GET /api/v1/activities/{id}`**: Retrieve detailed activity log entry by ID.
 
 ### 4.10. Content Calendar Projections
-*   **`GET /api/calendar`**: Fetch scheduled content range. Query parameters: `?startDate=2026-06-01T00:00:00Z&endDate=2026-06-30T23:59:59Z`
-*   **`GET /api/calendar/upcoming`**: Retrieve paginated upcoming content.
-*   **`GET /api/calendar/scheduled`**: Fetch scheduled content cards.
-*   **`GET /api/calendar/published`**: Get published content history.
-*   **`GET /api/calendar/overdue`**: List overdue content cards.
+*   **`GET /api/v1/calendar`**: Fetch scheduled content range. Query parameters: `?startDate=2026-06-01T00:00:00Z&endDate=2026-06-30T23:59:59Z`
+*   **`GET /api/v1/calendar/upcoming`**: Retrieve paginated upcoming content.
+*   **`GET /api/v1/calendar/scheduled`**: Fetch scheduled content cards.
+*   **`GET /api/v1/calendar/published`**: Get published content history.
+*   **`GET /api/v1/calendar/overdue`**: List overdue content cards.
 
 ### 4.11. Analytics Dashboard
-*   **`GET /api/analytics/dashboard`**: Return home page operational metrics.
-*   **`GET /api/analytics/content`**: Retrieve content counts grouped by stage, type, and priority.
-*   **`GET /api/analytics/assignments`**: Get assignments status and type counts.
-*   **`GET /api/analytics/tasks`**: Get task statistics and overdue counts.
-*   **`GET /api/analytics/publishing`**: Return publication calendar timeline performance trends.
+*   **`GET /api/v1/analytics/dashboard`**: Return home page operational metrics.
+*   **`GET /api/v1/analytics/content`**: Retrieve content counts grouped by stage, type, and priority.
+*   **`GET /api/v1/analytics/assignments`**: Get assignments status and type counts.
+*   **`GET /api/v1/analytics/tasks`**: Get task statistics and overdue counts.
+*   **`GET /api/v1/analytics/publishing`**: Return publication calendar timeline performance trends.
 
 ### 4.12. AI Brainstorming & Generation
-*   **`POST /api/ai/contents/{contentId}/brainstorm`**: Ask AI Gateway to generate click hooks, title options, and outlining recommendations. Results are saved as an `AI_BRAINSTORM` ResearchItem.
-*   **`POST /api/ai/contents/{contentId}/generate-script`**: Prompt AI Gateway to generate a conversation script draft based on compiled research context. Outlines are appended as Script Version 1.0.
+*   **`POST /api/v1/ai/contents/{contentId}/brainstorm`**: Ask AI Gateway to generate click hooks, title options, and outlining recommendations. Results are saved as an `AI_BRAINSTORM` ResearchItem.
+*   **`POST /api/v1/ai/contents/{contentId}/generate-script`**: Prompt AI Gateway to generate a conversation script draft based on compiled research context. Outlines are appended as Script Version 1.0.

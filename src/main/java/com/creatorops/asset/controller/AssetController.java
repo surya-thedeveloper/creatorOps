@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * REST controller exposing Asset management endpoints.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class AssetController {
 

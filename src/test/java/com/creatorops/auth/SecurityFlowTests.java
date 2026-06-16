@@ -32,7 +32,7 @@ class SecurityFlowTests {
 
     @Test
     void protectedMeEndpoint_NoToken_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/auth/me")
+        mockMvc.perform(get("/api/v1/auth/me")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
@@ -57,7 +57,7 @@ class SecurityFlowTests {
         when(jwtService.extractOrgId(anyString())).thenReturn(1L);
         when(userRepository.findByEmail("surya@example.com")).thenReturn(Optional.of(user));
 
-        mockMvc.perform(get("/api/auth/me")
+        mockMvc.perform(get("/api/v1/auth/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token_string")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

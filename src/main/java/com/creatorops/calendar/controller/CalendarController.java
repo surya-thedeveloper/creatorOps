@@ -23,7 +23,7 @@ import java.util.List;
  * REST controller exposing Content Calendar endpoints.
  */
 @RestController
-@RequestMapping("/api/calendar")
+@RequestMapping("/api/v1/calendar")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class CalendarController {
 

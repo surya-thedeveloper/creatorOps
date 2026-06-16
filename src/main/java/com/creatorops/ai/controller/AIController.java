@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * tenant isolation validated in the service layer.
  */
 @RestController
-@RequestMapping("/api/ai")
+@RequestMapping("/api/v1/ai")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class AIController {
 

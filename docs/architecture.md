@@ -211,7 +211,41 @@ sequenceDiagram
 
 ---
 
-## 6. Integration Architecture (Phase 2 & 3 Roadmap)
+## 6. Production Readiness & Operational Infrastructure
+
+To prepare the modular monolith for high-throughput, observable production environments, the platform implements the following operational safeguards:
+
+### 6.1. Request Correlation Tracking
+*   **CorrelationIdFilter**: Every request passing through the servlet container is stamped with a unique `X-Correlation-Id` UUID inside the HTTP headers (generating a new one if missing, or propagating the client-supplied header).
+*   **Thread Safety**: The correlation ID is populated in the SLF4J Diagnostic Context (`MDC`) under `correlationId` at the beginning of the request and cleanly pruned via `MDC.clear()` in a `finally` block at request termination to prevent thread pool memory leaks.
+*   **Response Header Propagation**: The generated or received correlation ID is returned in the response headers as `X-Correlation-Id` to allow end-to-end trace diagnostics.
+
+### 6.2. Structured Diagnostic Logging
+*   **MDC-Driven Logs**: Console log formats are structured to output context metadata automatically on every statement:
+    `[correlationId=%X{correlationId}] [userId=%X{userId}] [organizationId=%X{organizationId}] [entityId=%X{entityId}]`
+*   **Business Event Focus**: Logging statements are inserted selectively inside domain transactional boundaries (such as registration, login, content updates, task assignments, checklist modifications, and AI generation tasks) to capture clean auditing paths while avoiding excessive debug verbosity.
+
+### 6.3. API Versioning
+*   **Path Versioning Strategy**: To ensure backward compatibility for clients and enable reliable evolutionary updates, all core REST endpoints are versioned under the `/api/v1` path prefix.
+*   **Mapping Contracts**: Requests targeting legacy `/api` endpoints without the version prefix fail with `404 Not Found`.
+
+### 6.4. Observability & Monitoring (Spring Actuator)
+*   **Production-Safe Monitoring**: Spring Boot Actuator is exposed to enable liveness, readiness, and metrics aggregation.
+*   **Exposed Endpoints**: Only safe metrics and application descriptors are exposed:
+    *   `/actuator/health` — Liveness and readiness indicators.
+    *   `/actuator/info` — Build info, version (e.g. `1.0.0`), and metadata.
+    *   `/actuator/metrics` — JVM memory metrics, CPU usage, and HTTP statistics.
+*   **Endpoint Security**: Non-public or management endpoints are restricted to prevent config exposures.
+
+### 6.5. AI Rate Limiting
+*   **Bucket4j Rate Limiting**: The Gemini AI brainstorming and script generation endpoints (`POST /api/v1/ai/contents/{id}/brainstorm` and `POST /api/v1/ai/contents/{id}/generate-script`) are protected using an in-memory token bucket cache.
+*   **Per-User Scopes**: Limits are enforced per authenticated `userId`.
+*   **Configurable Parameters**: Default capacity limits (e.g. 5 tokens refilled every minute) are declared in `application.yml` and can be overridden via system environment properties without recompiling code.
+*   **Rejection Response**: Requests exceeding the capacity limits are rejected immediately with HTTP `429 Too Many Requests` returning RFC 7807 structured JSON error payloads.
+
+---
+
+## 7. Integration Architecture (Phase 2 & 3 Roadmap)
 
 ### Google Drive & OneDrive Storage Integration
 Instead of duplicating storage, Phase 2 implements cloud storage hooks.

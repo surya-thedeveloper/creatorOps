@@ -86,7 +86,7 @@ class AIControllerTests {
         );
         when(aiService.generateBrainstorm(eq(10L), eq("tony@slay.com"))).thenReturn(response);
 
-        mockMvc.perform(post("/api/ai/contents/10/brainstorm")
+        mockMvc.perform(post("/api/v1/ai/contents/10/brainstorm")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -115,7 +115,7 @@ class AIControllerTests {
 
         when(aiService.generateScript(eq(10L), eq("bruce@slay.com"))).thenReturn(response);
 
-        mockMvc.perform(post("/api/ai/contents/10/generate-script")
+        mockMvc.perform(post("/api/v1/ai/contents/10/generate-script")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -126,7 +126,7 @@ class AIControllerTests {
 
     @Test
     void unauthenticated_ReturnsUnauthorizedOrForbidden() throws Exception {
-        mockMvc.perform(post("/api/ai/contents/10/brainstorm")
+        mockMvc.perform(post("/api/v1/ai/contents/10/brainstorm")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }

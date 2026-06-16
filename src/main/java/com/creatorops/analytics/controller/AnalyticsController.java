@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  * endpoints, or role checks can be evaluated inside the service implementations.
  */
 @RestController
-@RequestMapping("/api/analytics")
+@RequestMapping("/api/v1/analytics")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
 public class AnalyticsController {
 

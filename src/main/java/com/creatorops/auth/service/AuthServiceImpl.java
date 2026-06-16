@@ -19,6 +19,8 @@ import java.time.OffsetDateTime;
 @Service
 public class AuthServiceImpl implements AuthService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthServiceImpl.class);
+
     private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
     private final PasswordEncoder passwordEncoder;
@@ -51,6 +53,9 @@ public class AuthServiceImpl implements AuthService {
         user.setOrganization(organization);
 
         User savedUser = userRepository.save(user);
+        org.slf4j.MDC.put("entityId", String.valueOf(savedUser.getId()));
+        log.info("User registered successfully: email={}, role={}", savedUser.getEmail(), savedUser.getRole());
+        org.slf4j.MDC.remove("entityId");
         return UserResponse.fromEntity(savedUser);
     }
 
@@ -72,6 +77,10 @@ public class AuthServiceImpl implements AuthService {
                 user.getOrganizationId()
         );
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+
+        org.slf4j.MDC.put("entityId", String.valueOf(user.getId()));
+        log.info("User logged in successfully: email={}", user.getEmail());
+        org.slf4j.MDC.remove("entityId");
 
         return new LoginResponse(accessToken, refreshToken, UserResponse.fromEntity(user));
     }
@@ -120,7 +129,9 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordResetExpiry(OffsetDateTime.now().plusHours(1));
 
         userRepository.save(user);
-        System.out.println("DEBUG: Password reset token generated for " + user.getEmail() + " -> " + token);
+        org.slf4j.MDC.put("entityId", String.valueOf(user.getId()));
+        log.info("Password reset initiated for user: email={}", user.getEmail());
+        org.slf4j.MDC.remove("entityId");
     }
 
     @Override
@@ -138,6 +149,9 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordResetExpiry(null);
 
         userRepository.save(user);
+        org.slf4j.MDC.put("entityId", String.valueOf(user.getId()));
+        log.info("Password reset executed successfully for user: email={}", user.getEmail());
+        org.slf4j.MDC.remove("entityId");
     }
 
     @Override
@@ -152,6 +166,9 @@ public class AuthServiceImpl implements AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+        org.slf4j.MDC.put("entityId", String.valueOf(user.getId()));
+        log.info("Password changed successfully for user: email={}", user.getEmail());
+        org.slf4j.MDC.remove("entityId");
     }
 
     @Override
@@ -164,6 +181,9 @@ public class AuthServiceImpl implements AuthService {
         user.setImageUrl(request.imageUrl());
 
         User updatedUser = userRepository.save(user);
+        org.slf4j.MDC.put("entityId", String.valueOf(updatedUser.getId()));
+        log.info("User profile updated successfully: email={}", updatedUser.getEmail());
+        org.slf4j.MDC.remove("entityId");
         return UserResponse.fromEntity(updatedUser);
     }
 }

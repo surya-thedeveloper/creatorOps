@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * REST controller for retrieving activity logs.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class ActivityController {
 
     private final ActivityService activityService;

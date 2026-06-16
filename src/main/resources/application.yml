@@ -30,6 +30,42 @@ spring:
   flyway:
     enabled: false  # Disabled for default H2 profile to avoid Postgres trigger/function errors
 
+# -------------------------------------------------------------------------
+# Logging Configuration
+# -------------------------------------------------------------------------
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [correlationId=%X{correlationId}] [userId=%X{userId}] [organizationId=%X{organizationId}] [entityId=%X{entityId}] - %msg%n"
+
+# -------------------------------------------------------------------------
+# Spring Actuator and Info Configuration
+# -------------------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: CreatorOps Backend
+    description: Content Operations Platform Backend
+    version: 1.0.0
+    stage: production-ready
+
+# -------------------------------------------------------------------------
+# AI Rate Limiting (Bucket4j Config)
+# -------------------------------------------------------------------------
+creatorops:
+  ai:
+    rate-limit:
+      capacity: 5
+      refill-tokens: 5
+      refill-duration-minutes: 1
+
 ---
 
 # -------------------------------------------------------------------------

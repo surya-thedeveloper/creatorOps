@@ -46,6 +46,8 @@ import java.time.OffsetDateTime;
 @Service
 public class ContentServiceImpl implements ContentService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ContentServiceImpl.class);
+
     private final ContentRepository contentRepository;
     private final BrandRepository brandRepository;
     private final UserRepository userRepository;
@@ -91,6 +93,9 @@ public class ContentServiceImpl implements ContentService {
         );
 
         Content saved = contentRepository.save(content);
+        org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
+        log.info("Created content card: title={}, brandId={}, stage={}", saved.getTitle(), saved.getBrand().getId(), saved.getStage());
+        org.slf4j.MDC.remove("entityId");
         activityService.record(
             saved,
             user,
@@ -198,6 +203,9 @@ public class ContentServiceImpl implements ContentService {
         content.setPublishDate(request.publishDate());
 
         Content updated = contentRepository.save(content);
+        org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
+        log.info("Updated content card: title={}, brandId={}, stage={}", updated.getTitle(), updated.getBrand().getId(), updated.getStage());
+        org.slf4j.MDC.remove("entityId");
         activityService.record(
             updated,
             user,
@@ -281,6 +289,10 @@ public class ContentServiceImpl implements ContentService {
             "Content '" + content.getTitle() + "' was deleted",
             null
         );
+
+        org.slf4j.MDC.put("entityId", String.valueOf(content.getId()));
+        log.info("Deleted content card: title={}, contentId={}", content.getTitle(), content.getId());
+        org.slf4j.MDC.remove("entityId");
 
         contentRepository.delete(content);
     }

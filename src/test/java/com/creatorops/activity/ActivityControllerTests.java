@@ -114,7 +114,7 @@ class ActivityControllerTests {
         when(activityService.getActivitiesByContent(eq(42L), eq("bruce@slay.com"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/contents/42/activities")
+        mockMvc.perform(get("/api/v1/contents/42/activities")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -130,7 +130,7 @@ class ActivityControllerTests {
         when(activityService.getActivitiesByContent(eq(42L), eq("thor@other.com"), any(Pageable.class)))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Content belongs to a different organization."));
 
-        mockMvc.perform(get("/api/contents/42/activities")
+        mockMvc.perform(get("/api/v1/contents/42/activities")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
@@ -143,7 +143,7 @@ class ActivityControllerTests {
         mockAuth(contributorUser);
         when(activityService.getActivityById(eq(10L), eq("bruce@slay.com"))).thenReturn(validResponse);
 
-        mockMvc.perform(get("/api/activities/10")
+        mockMvc.perform(get("/api/v1/activities/10")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -157,7 +157,7 @@ class ActivityControllerTests {
         when(activityService.getActivityById(eq(10L), eq("thor@other.com")))
                 .thenThrow(new org.springframework.security.access.AccessDeniedException("Access denied: Activity belongs to a different organization."));
 
-        mockMvc.perform(get("/api/activities/10")
+        mockMvc.perform(get("/api/v1/activities/10")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())

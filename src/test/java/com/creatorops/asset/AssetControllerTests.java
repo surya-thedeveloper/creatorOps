@@ -126,7 +126,7 @@ class AssetControllerTests {
         when(assetService.createAsset(eq(42L), eq("bruce@slay.com"), any(AssetRequest.class)))
                 .thenReturn(validResponse);
 
-        mockMvc.perform(post("/api/contents/42/assets")
+        mockMvc.perform(post("/api/v1/contents/42/assets")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -151,7 +151,7 @@ class AssetControllerTests {
             1
         );
 
-        mockMvc.perform(post("/api/contents/42/assets")
+        mockMvc.perform(post("/api/v1/contents/42/assets")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -167,7 +167,7 @@ class AssetControllerTests {
         mockAuth(contributorUser);
         when(assetService.getAssetById(eq(500L), eq("bruce@slay.com"))).thenReturn(validResponse);
 
-        mockMvc.perform(get("/api/assets/500")
+        mockMvc.perform(get("/api/v1/assets/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(500))
@@ -180,7 +180,7 @@ class AssetControllerTests {
         when(assetService.getAssetsByContent(eq(42L), eq("bruce@slay.com"), eq(AssetType.THUMBNAIL), eq(AssetSource.GOOGLE_DRIVE), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(validResponse), PageRequest.of(0, 20), 1));
 
-        mockMvc.perform(get("/api/contents/42/assets?assetType=THUMBNAIL&assetSource=GOOGLE_DRIVE")
+        mockMvc.perform(get("/api/v1/contents/42/assets?assetType=THUMBNAIL&assetSource=GOOGLE_DRIVE")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(500))
@@ -193,7 +193,7 @@ class AssetControllerTests {
         when(assetService.updateAsset(eq(500L), eq("bruce@slay.com"), any(AssetRequest.class)))
                 .thenReturn(validResponse);
 
-        mockMvc.perform(put("/api/assets/500")
+        mockMvc.perform(put("/api/v1/assets/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -208,7 +208,7 @@ class AssetControllerTests {
         doThrow(new AccessDeniedException("Access denied: Contributors can only modify assets they created."))
                 .when(assetService).updateAsset(eq(500L), eq("bruce@slay.com"), any(AssetRequest.class));
 
-        mockMvc.perform(put("/api/assets/500")
+        mockMvc.perform(put("/api/v1/assets/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
@@ -222,7 +222,7 @@ class AssetControllerTests {
         mockAuth(managerUser);
         doNothing().when(assetService).deleteAsset(eq(500L), eq("tony@slay.com"));
 
-        mockMvc.perform(delete("/api/assets/500")
+        mockMvc.perform(delete("/api/v1/assets/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isNoContent());
     }
@@ -233,7 +233,7 @@ class AssetControllerTests {
         doThrow(new AccessDeniedException("Access denied: Contributors can only delete assets they created."))
                 .when(assetService).deleteAsset(eq(500L), eq("bruce@slay.com"));
 
-        mockMvc.perform(delete("/api/assets/500")
+        mockMvc.perform(delete("/api/v1/assets/500")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer valid_token"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
