@@ -19,7 +19,7 @@ import com.creatorops.research.repository.ResearchItemRepository;
 import com.creatorops.script.dto.ScriptResponse;
 import com.creatorops.script.entity.DocumentType;
 import com.creatorops.script.service.ScriptService;
-import com.creatorops.activity.service.ActivityService;
+import com.creatorops.common.event.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +54,7 @@ class AIServiceTests {
     private ScriptService scriptService;
 
     @Mock
-    private ActivityService activityService;
+    private DomainEventPublisher domainEventPublisher;
 
     @Mock
     private AIProvider aiProvider;
@@ -106,7 +106,7 @@ class AIServiceTests {
         String expectedTitle = "AI Brainstorm - " + OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         assertEquals(expectedTitle, response.title());
         assertEquals("AI brain ideas output", response.content());
-        verify(activityService, times(1)).record(any(), any(), any(), any(), eq(20L), anyString(), any());
+        verify(domainEventPublisher, times(1)).publish(any(com.creatorops.common.event.AiBrainstormGeneratedEvent.class));
     }
 
     @Test
@@ -140,7 +140,7 @@ class AIServiceTests {
         assertNotNull(response);
         assertEquals(30L, response.id());
         assertEquals(1, response.version());
-        verify(activityService, times(1)).record(any(), any(), any(), any(), eq(30L), anyString(), any());
+        verify(domainEventPublisher, times(1)).publish(any(com.creatorops.common.event.AiScriptGeneratedEvent.class));
     }
 
     @Test

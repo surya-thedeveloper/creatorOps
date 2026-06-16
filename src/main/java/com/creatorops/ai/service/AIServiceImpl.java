@@ -15,9 +15,9 @@ import com.creatorops.script.dto.ScriptRequest;
 import com.creatorops.script.dto.ScriptResponse;
 import com.creatorops.script.entity.DocumentType;
 import com.creatorops.script.service.ScriptService;
-import com.creatorops.activity.entity.EntityType;
-import com.creatorops.activity.entity.EventType;
-import com.creatorops.activity.service.ActivityService;
+import com.creatorops.common.event.DomainEventPublisher;
+import com.creatorops.common.event.AiBrainstormGeneratedEvent;
+import com.creatorops.common.event.AiScriptGeneratedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
@@ -65,7 +65,7 @@ public class AIServiceImpl implements AIService {
     private final ContentRepository contentRepository;
     private final ResearchItemRepository researchItemRepository;
     private final ScriptService scriptService;
-    private final ActivityService activityService;
+    private final DomainEventPublisher domainEventPublisher;
     private final AIProvider aiProvider;
 
     @Autowired
@@ -73,13 +73,13 @@ public class AIServiceImpl implements AIService {
                          ContentRepository contentRepository,
                          ResearchItemRepository researchItemRepository,
                          ScriptService scriptService,
-                         ActivityService activityService,
+                         DomainEventPublisher domainEventPublisher,
                          AIProvider aiProvider) {
         this.userRepository = userRepository;
         this.contentRepository = contentRepository;
         this.researchItemRepository = researchItemRepository;
         this.scriptService = scriptService;
-        this.activityService = activityService;
+        this.domainEventPublisher = domainEventPublisher;
         this.aiProvider = aiProvider;
     }
 
@@ -136,16 +136,14 @@ public class AIServiceImpl implements AIService {
         log.info("AI brainstorm generated: title={}, contentId={}", saved.getTitle(), contentId);
         org.slf4j.MDC.remove("entityId");
 
-        // 4. Record Activity timeline event
-        activityService.record(
-                content,
-                user,
-                EventType.AI_BRAINSTORM_GENERATED,
-                EntityType.RESEARCH,
+        // 4. Publish Domain Event
+        domainEventPublisher.publish(new AiBrainstormGeneratedEvent(
+                user.getId(),
+                user.getOrganizationId(),
+                content.getId(),
                 saved.getId(),
-                "AI brainstorm generated: " + saved.getTitle(),
-                null
-        );
+                saved.getTitle()
+        ));
 
         return ResearchItemResponse.fromEntity(saved);
     }
@@ -186,16 +184,14 @@ public class AIServiceImpl implements AIService {
         log.info("AI script draft generated: version={}, contentId={}", scriptResponse.version(), contentId);
         org.slf4j.MDC.remove("entityId");
 
-        // 4. Record AI activity log event
-        activityService.record(
-                content,
-                user,
-                EventType.AI_SCRIPT_GENERATED,
-                EntityType.SCRIPT,
+        // 4. Publish Domain Event
+        domainEventPublisher.publish(new AiScriptGeneratedEvent(
+                user.getId(),
+                user.getOrganizationId(),
+                content.getId(),
                 scriptResponse.id(),
-                "AI script generated: Version " + scriptResponse.version(),
-                null
-        );
+                scriptResponse.version()
+        ));
 
         return scriptResponse;
     }

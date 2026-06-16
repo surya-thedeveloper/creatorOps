@@ -96,6 +96,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Spring Caching Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
         <!-- Bucket4j Core Rate Limiting -->
         <dependency>
             <groupId>com.bucket4j</groupId>

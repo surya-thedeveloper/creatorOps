@@ -176,6 +176,7 @@ public class Content extends BaseEntity {
         this.deletedAt = deletedAt;
     }
 
+    @Transient
     public Long getBrandId() {
         return brand != null ? brand.getId() : null;
     }

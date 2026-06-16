@@ -101,6 +101,7 @@ public class Brand extends BaseEntity {
         this.organization = organization;
     }
 
+    @Transient
     public Long getOrganizationId() {
         return organization != null ? organization.getId() : null;
     }

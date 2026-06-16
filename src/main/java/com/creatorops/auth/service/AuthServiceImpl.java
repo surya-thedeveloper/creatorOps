@@ -11,6 +11,9 @@ import com.creatorops.common.exception.ResourceNotFoundException;
 import com.creatorops.organization.entity.Organization;
 import com.creatorops.organization.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,6 +90,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "users", key = "'dto-' + #email")
     public UserResponse getCurrentUser(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
@@ -136,6 +140,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public void resetPassword(ResetPasswordRequest request) {
         User user = userRepository.findByPasswordResetToken(request.token())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid or expired reset token"));
@@ -156,6 +161,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "users", key = "#email"),
+        @CacheEvict(value = "users", key = "'dto-' + #email")
+    })
     public void changePassword(String email, ChangePasswordRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
@@ -173,6 +182,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "users", key = "#email"),
+        @CacheEvict(value = "users", key = "'dto-' + #email")
+    })
     public UserResponse updateProfile(String email, UpdateProfileRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));

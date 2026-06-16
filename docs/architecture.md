@@ -256,3 +256,60 @@ Instead of duplicating storage, Phase 2 implements cloud storage hooks.
 *   **OAuth Integration**: Users link their channel credentials (YouTube/LinkedIn OAuth2) at the Brand level.
 *   **Scheduler worker**: A scheduled Spring Service (`@Scheduled`) polls for content in the `SCHEDULED` state with a release timestamp less than or equal to the current UTC time.
 *   The worker retrieves final video files/metadata and triggers publishing runs, transitioning the content state to `PUBLISHED` upon success.
+
+---
+
+## 8. Event-Driven Architecture (Domain Events)
+
+To decouple business domains and improve extensibility, CreatorOps uses a lightweight, transaction-aware Event-Driven Architecture.
+
+### Core Components
+*   **`DomainEvent`**: Abstract base class representing a past business occurrence. It captures metadata tracing parameters including `eventId`, `occurredAt`, `userId`, `organizationId`, `contentId`, and `entityId`, plus diagnostic descriptions and JSON payload mappings.
+*   **`DomainEventPublisher`**: An application wrapper bean delegating publication events to Spring's `ApplicationEventPublisher`. 
+*   **`ActivityEventListener`**: A polymorphic event listener capturing all subclass configurations extending `DomainEvent`. It maps events to standard database `Activity` records and calls `ActivityService.record(...)` asynchronously.
+
+### Transaction Isolation
+To prevent race conditions where async handler tasks look up entities from the database before database updates are committed, `ActivityEventListener` uses:
+`@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`
+This enforces that event processing starts only after database commits succeed.
+
+---
+
+## 9. Asynchronous Processing Foundation
+
+Asynchronous background operations are handled natively in Spring Boot via the `@EnableAsync` config wrapper.
+
+### Thread Pool Configuration (`creatorOpsAsyncExecutor`)
+A dedicated Spring TaskExecutor pool handles all non-blocking operations:
+*   **Core Pool Size**: 4 threads.
+*   **Max Pool Size**: 8 threads.
+*   **Queue Capacity**: 100 tasks.
+*   **Thread Prefix**: `creatorops-async-`
+
+### Context Propagation (MDC Preservation)
+Because Standard ThreadLocal variables do not cross thread boundaries to thread pools, we implement a custom `MdcTaskDecorator`. It automatically captures the SLF4J Diagnostic Context (`MDC`) from the submitting parent thread and populates it inside the execution task thread, assuring correlation IDs and trace claims are preserved inside async logs.
+
+### Exception Handling (`AsyncExceptionHandler`)
+An asynchronous uncaught exception handler handles silent execution failures by capturing exceptions thrown inside `@Async` methods and writing structured trace diagnostics to the application logs.
+
+---
+
+## 10. Application Caching Strategy
+
+CreatorOps uses local Spring Boot Caching (`@EnableCaching`) to optimize reads for low-volatility database resources while keeping highly volatile workflow resources cache-free.
+
+### Caching Boundaries
+To avoid dirty read states, caching is restricted to low-volatility entities:
+*   `organizations` (Cached under `findById`)
+*   `brands` (Cached under `findById` and `getBrands`)
+*   `users` (Cached under `findByEmail` and `getCurrentUser`)
+
+Highly volatile workflow entities (such as Content, Task, Assignment, Script, Asset, Research, and AI Results) **are NOT cached** because they change frequently.
+
+### Cache Manager
+We use a standard, local `ConcurrentMapCacheManager`. No external caching servers (such as Redis) are introduced in Phase 1 to minimize architectural overhead, but namespaces and boundaries are designed to easily swap in a distributed provider in the future.
+
+### Cache Eviction and Invalidation
+To enforce data consistency:
+*   `@Cacheable` caches query values on reads.
+*   `@CacheEvict` invalidates the specific key (or clears the entire namespace via `allEntries = true`) on writes (creates, updates, deletes). For example, updating an organization evicts its cache key, and creating a brand clears the `brands` namespace to invalidate list caches.

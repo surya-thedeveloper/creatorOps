@@ -713,8 +713,74 @@ When executing a coding task, the implementing AI agent **must** append a copy o
     *   Activity Timeline
 *   **Status**: Milestone Tagged
 
+---
 
+### Sprint 2 — System Design & Scalability Foundations
+*   **Date**: 2026-06-16
+*   **Status**: Complete ✅
+*   **Scope**: Architecture improvements — no new business features.
 
+#### Part 1 — Domain Events Foundation
+
+*   **New Package**: `com.creatorops.common.event`
+*   **Base Class**: `DomainEvent` — abstract, carries `eventId` (UUID), `occurredAt`, `userId`, `organizationId`.
+*   **Publisher**: `DomainEventPublisher` — thin wrapper around Spring `ApplicationEventPublisher`. Enables easy swapping if ever needed.
+*   **22 Concrete Events Created**:
+    *   Content: `ContentCreatedEvent`, `ContentUpdatedEvent`, `ContentDeletedEvent`
+    *   Research: `ResearchCreatedEvent`, `ResearchUpdatedEvent`, `ResearchDeletedEvent`
+    *   Script: `ScriptCreatedEvent`, `ScriptUpdatedEvent`, `ScriptDeletedEvent`
+    *   Assignment: `AssignmentCreatedEvent`, `AssignmentUpdatedEvent`, `AssignmentStatusChangedEvent`, `AssignmentDeletedEvent`
+    *   Task: `TaskCreatedEvent`, `TaskUpdatedEvent`, `TaskStatusChangedEvent`, `TaskDeletedEvent`
+    *   Asset: `AssetCreatedEvent`, `AssetUpdatedEvent`, `AssetDeletedEvent`
+    *   AI: `AiBrainstormGeneratedEvent`, `AiScriptGeneratedEvent`
+
+#### Part 2 — Activity Event Listener
+
+*   **New Class**: `ActivityEventListener`
+*   **Pattern**: Listens on base `DomainEvent` via `@TransactionalEventListener(phase = AFTER_COMMIT)` — guarantees the DB transaction has committed before writing the activity record.
+*   **Result**: `ContentServiceImpl`, `ResearchItemServiceImpl`, `ScriptServiceImpl`, `AssignmentServiceImpl`, `TaskServiceImpl`, `AssetServiceImpl`, `AIServiceImpl` no longer import or know about `ActivityService`. Tight coupling eliminated.
+
+#### Part 3 — Async Processing Foundation
+
+*   **New Class**: `AsyncConfig` — `@EnableAsync`, registers `creatorOpsAsyncExecutor` (`ThreadPoolTaskExecutor`, core=4, max=8, queue=100, prefix=`creatorops-async-`).
+*   **New Class**: `MdcTaskDecorator` — propagates SLF4J MDC map from parent thread to child thread so correlation IDs appear in all async log lines.
+*   **New Class**: `AsyncExceptionHandler` — implements `AsyncUncaughtExceptionHandler`, logs failures with method + args, never swallows silently.
+*   **`ActivityEventListener`** annotated with `@Async("creatorOpsAsyncExecutor")` — activity writes are fully decoupled from the request thread.
+
+#### Part 4 — Application Caching Foundation
+
+*   **New Class**: `CacheConfig` — `@EnableCaching`, `ConcurrentMapCacheManager` with named caches: `organizations`, `brands`, `users`.
+*   **Caching Boundaries** (intentional):
+    *   ✅ Cached: `Organization` (by ID), `Brand` (by ID), `User` (by email, DTO under `dto-{email}`)
+    *   ❌ Not Cached: Content, Research, Script, Assignment, Task, Asset, AI Results — too volatile.
+*   **Redis intentionally deferred** — `ConcurrentMapCacheManager` is sufficient for Phase 1 scale. Redis is a Phase 3 concern.
+*   **Cache Eviction**: Write operations annotated with `@CacheEvict` / `@Caching` to clear all affected keys immediately.
+
+#### Part 5 — Tests
+
+*   **New Test Class**: `SystemScalabilityTests` (5 tests):
+    *   `testAsyncThreadPoolConfiguration` — verifies executor thread name prefix.
+    *   `testMdcPropagationInAsyncContext` — verifies correlation ID survives thread handoff.
+    *   `testActivityEventListenerPersistsAfterCommit` — verifies activity records are written after publishing a domain event.
+    *   `testOrganizationCachingAndEviction` — verifies `@Cacheable` populates and `@CacheEvict` invalidates.
+    *   `testBrandCachingAndEviction` — verifies brand cache lifecycle.
+    *   `testUserCachingAndEviction` — verifies user DTO cache lifecycle.
+*   **Test Infrastructure**: `CacheClearingTestListener` registered via `spring.factories` — clears all caches before every test method to prevent cross-test pollution from in-memory cache surviving transaction rollbacks.
+*   **Bug Fixed**: `BrandRepository.findByOrganizationId` renamed to `findByOrganization_Id` — Spring Data JPA association path traversal fix. The `@Transient` getter on `Brand.getOrganizationId()` caused `InvalidDataAccessApiUsage` at query derivation time.
+
+#### Part 6 — Documentation
+
+*   **Updated**: `README.md` — Event-Driven Architecture, Async Processing, Caching Strategy sections.
+*   **Updated**: `docs/architecture.md` — Domain Event flow diagram, async executor config, caching layer.
+*   **Updated**: `docs/api-design.md` — Architecture patterns section covering events and caching.
+
+#### Final Test Run Results
+
+```
+Tests run: 140, Failures: 0, Errors: 0, Skipped: 0 — BUILD SUCCESS
+```
+
+All 140 tests pass across all modules.
 
 
 

@@ -1,8 +1,10 @@
 package com.creatorops.task.service;
 
-import com.creatorops.activity.entity.EntityType;
-import com.creatorops.activity.entity.EventType;
-import com.creatorops.activity.service.ActivityService;
+import com.creatorops.common.event.DomainEventPublisher;
+import com.creatorops.common.event.TaskCreatedEvent;
+import com.creatorops.common.event.TaskUpdatedEvent;
+import com.creatorops.common.event.TaskStatusChangedEvent;
+import com.creatorops.common.event.TaskDeletedEvent;
 import com.creatorops.assignment.entity.Assignment;
 import com.creatorops.assignment.repository.AssignmentRepository;
 import com.creatorops.auth.entity.User;
@@ -50,17 +52,17 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
-    private final ActivityService activityService;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Autowired
     public TaskServiceImpl(TaskRepository taskRepository,
                            AssignmentRepository assignmentRepository,
                            UserRepository userRepository,
-                           ActivityService activityService) {
+                           DomainEventPublisher domainEventPublisher) {
         this.taskRepository = taskRepository;
         this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
-        this.activityService = activityService;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -111,16 +113,14 @@ public class TaskServiceImpl implements TaskService {
         log.info("Created task: title={}, assignmentId={}", saved.getTitle(), saved.getAssignment().getId());
         org.slf4j.MDC.remove("entityId");
 
-        // Record in timeline
-        activityService.record(
-            assignment.getContent(),
-            creator,
-            EventType.TASK_CREATED,
-            EntityType.TASK,
+        // Publish Domain Event
+        domainEventPublisher.publish(new TaskCreatedEvent(
+            creator.getId(),
+            creator.getOrganizationId(),
+            assignment.getContent().getId(),
             saved.getId(),
-            "Task '" + saved.getTitle() + "' was created",
-            null
-        );
+            saved.getTitle()
+        ));
 
         return TaskResponse.fromEntity(saved);
     }
@@ -213,16 +213,14 @@ public class TaskServiceImpl implements TaskService {
         log.info("Updated task: title={}, priority={}, assignedToUserId={}", updated.getTitle(), updated.getPriority(), updated.getAssignedToUser().getId());
         org.slf4j.MDC.remove("entityId");
 
-        // Record in timeline
-        activityService.record(
-            updated.getAssignment().getContent(),
-            updater,
-            EventType.TASK_UPDATED,
-            EntityType.TASK,
+        // Publish Domain Event
+        domainEventPublisher.publish(new TaskUpdatedEvent(
+            updater.getId(),
+            updater.getOrganizationId(),
+            updated.getAssignment().getContent().getId(),
             updated.getId(),
-            "Task '" + updated.getTitle() + "' was updated",
-            null
-        );
+            updated.getTitle()
+        ));
 
         return TaskResponse.fromEntity(updated);
     }
@@ -263,16 +261,15 @@ public class TaskServiceImpl implements TaskService {
         log.info("Updated task status: oldStatus={}, newStatus={}", oldStatus, newStatus);
         org.slf4j.MDC.remove("entityId");
 
-        // Record in timeline
-        activityService.record(
-            updated.getAssignment().getContent(),
-            updater,
-            EventType.TASK_STATUS_CHANGED,
-            EntityType.TASK,
+        // Publish Domain Event
+        domainEventPublisher.publish(new TaskStatusChangedEvent(
+            updater.getId(),
+            updater.getOrganizationId(),
+            updated.getAssignment().getContent().getId(),
             updated.getId(),
-            "Task status changed from " + oldStatus + " to " + newStatus,
-            "{\"oldStatus\":\"" + oldStatus + "\",\"newStatus\":\"" + newStatus + "\"}"
-        );
+            oldStatus.name(),
+            newStatus.name()
+        ));
 
         return TaskResponse.fromEntity(updated);
     }
@@ -296,16 +293,14 @@ public class TaskServiceImpl implements TaskService {
             throw new AccessDeniedException("Access denied: Task belongs to a different organization.");
         }
 
-        // Record in timeline before physically deleting
-        activityService.record(
-            task.getAssignment().getContent(),
-            deleter,
-            EventType.TASK_DELETED,
-            EntityType.TASK,
+        // Publish Domain Event
+        domainEventPublisher.publish(new TaskDeletedEvent(
+            deleter.getId(),
+            deleter.getOrganizationId(),
+            task.getAssignment().getContent().getId(),
             task.getId(),
-            "Task '" + task.getTitle() + "' was deleted",
-            null
-        );
+            task.getTitle()
+        ));
 
         org.slf4j.MDC.put("entityId", String.valueOf(task.getId()));
         log.info("Deleted task: taskId={}", task.getId());

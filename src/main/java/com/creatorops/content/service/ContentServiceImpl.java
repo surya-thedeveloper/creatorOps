@@ -11,9 +11,11 @@ import com.creatorops.content.entity.Content;
 import com.creatorops.content.entity.ContentStage;
 import com.creatorops.content.entity.ContentType;
 import com.creatorops.content.repository.ContentRepository;
-import com.creatorops.activity.entity.EntityType;
 import com.creatorops.activity.entity.EventType;
-import com.creatorops.activity.service.ActivityService;
+import com.creatorops.common.event.DomainEventPublisher;
+import com.creatorops.common.event.ContentCreatedEvent;
+import com.creatorops.common.event.ContentUpdatedEvent;
+import com.creatorops.common.event.ContentDeletedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,17 +53,17 @@ public class ContentServiceImpl implements ContentService {
     private final ContentRepository contentRepository;
     private final BrandRepository brandRepository;
     private final UserRepository userRepository;
-    private final ActivityService activityService;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Autowired
     public ContentServiceImpl(ContentRepository contentRepository,
                               BrandRepository brandRepository,
                               UserRepository userRepository,
-                              ActivityService activityService) {
+                              DomainEventPublisher domainEventPublisher) {
         this.contentRepository = contentRepository;
         this.brandRepository = brandRepository;
         this.userRepository = userRepository;
-        this.activityService = activityService;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -96,36 +98,32 @@ public class ContentServiceImpl implements ContentService {
         org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
         log.info("Created content card: title={}, brandId={}, stage={}", saved.getTitle(), saved.getBrand().getId(), saved.getStage());
         org.slf4j.MDC.remove("entityId");
-        activityService.record(
-            saved,
-            user,
-            EventType.CONTENT_CREATED,
-            EntityType.CONTENT,
+        domainEventPublisher.publish(new ContentCreatedEvent(
+            user.getId(),
+            user.getOrganizationId(),
             saved.getId(),
-            "Content '" + saved.getTitle() + "' was created",
-            null
-        );
+            saved.getTitle(),
+            saved.getStage().name()
+        ));
 
         if (saved.getStage() == ContentStage.SCHEDULED || saved.getPublishDate() != null) {
-            activityService.record(
-                saved,
-                user,
+            domainEventPublisher.publish(new ContentUpdatedEvent(
+                user.getId(),
+                user.getOrganizationId(),
+                saved.getId(),
+                saved.getTitle(),
                 EventType.CONTENT_SCHEDULED,
-                EntityType.CONTENT,
-                saved.getId(),
-                "Content '" + saved.getTitle() + "' was scheduled",
-                null
-            );
+                "Content '" + saved.getTitle() + "' was scheduled"
+            ));
         } else if (saved.getStage() == ContentStage.PUBLISHED) {
-            activityService.record(
-                saved,
-                user,
-                EventType.CONTENT_PUBLISHED,
-                EntityType.CONTENT,
+            domainEventPublisher.publish(new ContentUpdatedEvent(
+                user.getId(),
+                user.getOrganizationId(),
                 saved.getId(),
-                "Content '" + saved.getTitle() + "' was published",
-                null
-            );
+                saved.getTitle(),
+                EventType.CONTENT_PUBLISHED,
+                "Content '" + saved.getTitle() + "' was published"
+            ));
         }
 
         return ContentResponse.fromEntity(saved);
@@ -206,58 +204,53 @@ public class ContentServiceImpl implements ContentService {
         org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
         log.info("Updated content card: title={}, brandId={}, stage={}", updated.getTitle(), updated.getBrand().getId(), updated.getStage());
         org.slf4j.MDC.remove("entityId");
-        activityService.record(
-            updated,
-            user,
-            EventType.CONTENT_UPDATED,
-            EntityType.CONTENT,
+        domainEventPublisher.publish(new ContentUpdatedEvent(
+            user.getId(),
+            user.getOrganizationId(),
             updated.getId(),
-            "Content '" + updated.getTitle() + "' was updated",
-            null
-        );
+            updated.getTitle(),
+            EventType.CONTENT_UPDATED,
+            "Content '" + updated.getTitle() + "' was updated"
+        ));
 
         if (updated.getStage() == ContentStage.SCHEDULED && oldStage != ContentStage.SCHEDULED) {
-            activityService.record(
-                updated,
-                user,
+            domainEventPublisher.publish(new ContentUpdatedEvent(
+                user.getId(),
+                user.getOrganizationId(),
+                updated.getId(),
+                updated.getTitle(),
                 EventType.CONTENT_SCHEDULED,
-                EntityType.CONTENT,
-                updated.getId(),
-                "Content '" + updated.getTitle() + "' was scheduled",
-                null
-            );
+                "Content '" + updated.getTitle() + "' was scheduled"
+            ));
         } else if (updated.getStage() == ContentStage.PUBLISHED && oldStage != ContentStage.PUBLISHED) {
-            activityService.record(
-                updated,
-                user,
-                EventType.CONTENT_PUBLISHED,
-                EntityType.CONTENT,
+            domainEventPublisher.publish(new ContentUpdatedEvent(
+                user.getId(),
+                user.getOrganizationId(),
                 updated.getId(),
-                "Content '" + updated.getTitle() + "' was published",
-                null
-            );
+                updated.getTitle(),
+                EventType.CONTENT_PUBLISHED,
+                "Content '" + updated.getTitle() + "' was published"
+            ));
         }
 
         if (oldPublishDate == null && updated.getPublishDate() != null && updated.getStage() != ContentStage.SCHEDULED) {
-            activityService.record(
-                updated,
-                user,
+            domainEventPublisher.publish(new ContentUpdatedEvent(
+                user.getId(),
+                user.getOrganizationId(),
+                updated.getId(),
+                updated.getTitle(),
                 EventType.CONTENT_SCHEDULED,
-                EntityType.CONTENT,
-                updated.getId(),
-                "Content '" + updated.getTitle() + "' was scheduled",
-                null
-            );
+                "Content '" + updated.getTitle() + "' was scheduled"
+            ));
         } else if (oldPublishDate != null && updated.getPublishDate() != null && !oldPublishDate.isEqual(updated.getPublishDate())) {
-            activityService.record(
-                updated,
-                user,
-                EventType.CONTENT_RESCHEDULED,
-                EntityType.CONTENT,
+            domainEventPublisher.publish(new ContentUpdatedEvent(
+                user.getId(),
+                user.getOrganizationId(),
                 updated.getId(),
-                "Content '" + updated.getTitle() + "' was rescheduled",
-                null
-            );
+                updated.getTitle(),
+                EventType.CONTENT_RESCHEDULED,
+                "Content '" + updated.getTitle() + "' was rescheduled"
+            ));
         }
 
         return ContentResponse.fromEntity(updated);
@@ -280,15 +273,12 @@ public class ContentServiceImpl implements ContentService {
             throw new AccessDeniedException("Access denied: Cannot delete content outside your organization.");
         }
 
-        activityService.record(
-            content,
-            user,
-            EventType.CONTENT_DELETED,
-            EntityType.CONTENT,
+        domainEventPublisher.publish(new ContentDeletedEvent(
+            user.getId(),
+            user.getOrganizationId(),
             content.getId(),
-            "Content '" + content.getTitle() + "' was deleted",
-            null
-        );
+            content.getTitle()
+        ));
 
         org.slf4j.MDC.put("entityId", String.valueOf(content.getId()));
         log.info("Deleted content card: title={}, contentId={}", content.getTitle(), content.getId());

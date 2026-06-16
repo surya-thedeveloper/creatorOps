@@ -10,6 +10,7 @@ import com.creatorops.organization.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "organizations", key = "#id")
     public OrganizationResponse updateOrganization(Long id, OrganizationRequest request, String currentUserEmail) {
         User user = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -59,6 +61,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "organizations", key = "#id")
     public void deleteOrganization(Long id, String currentUserEmail) {
         User user = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

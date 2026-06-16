@@ -15,9 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.creatorops.activity.entity.EntityType;
-import com.creatorops.activity.entity.EventType;
-import com.creatorops.activity.service.ActivityService;
+import com.creatorops.common.event.DomainEventPublisher;
+import com.creatorops.common.event.ScriptCreatedEvent;
+import com.creatorops.common.event.ScriptUpdatedEvent;
+import com.creatorops.common.event.ScriptDeletedEvent;
 
 /**
  * <h3>Why this class exists</h3>
@@ -42,17 +43,17 @@ public class ScriptServiceImpl implements ScriptService {
     private final ScriptRepository scriptRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
-    private final ActivityService activityService;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Autowired
     public ScriptServiceImpl(ScriptRepository scriptRepository,
                              ContentRepository contentRepository,
                              UserRepository userRepository,
-                             ActivityService activityService) {
+                             DomainEventPublisher domainEventPublisher) {
         this.scriptRepository = scriptRepository;
         this.contentRepository = contentRepository;
         this.userRepository = userRepository;
-        this.activityService = activityService;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -84,15 +85,13 @@ public class ScriptServiceImpl implements ScriptService {
         script.setGeneratedScript(request.generatedScript());
 
         Script saved = scriptRepository.save(script);
-        activityService.record(
-            content,
-            user,
-            EventType.SCRIPT_CREATED,
-            EntityType.SCRIPT,
+        domainEventPublisher.publish(new ScriptCreatedEvent(
+            user.getId(),
+            user.getOrganizationId(),
+            content.getId(),
             saved.getId(),
-            "Script version " + saved.getVersion() + " created",
-            "{\"version\":" + saved.getVersion() + "}"
-        );
+            saved.getVersion()
+        ));
         return ScriptResponse.fromEntity(saved);
     }
 
@@ -152,15 +151,13 @@ public class ScriptServiceImpl implements ScriptService {
         script.setGeneratedScript(request.generatedScript());
 
         Script updated = scriptRepository.save(script);
-        activityService.record(
-            updated.getContent(),
-            user,
-            EventType.SCRIPT_UPDATED,
-            EntityType.SCRIPT,
+        domainEventPublisher.publish(new ScriptUpdatedEvent(
+            user.getId(),
+            user.getOrganizationId(),
+            updated.getContent().getId(),
             updated.getId(),
-            "Script version " + updated.getVersion() + " updated",
-            "{\"version\":" + updated.getVersion() + "}"
-        );
+            updated.getVersion()
+        ));
         return ScriptResponse.fromEntity(updated);
     }
 
@@ -178,15 +175,13 @@ public class ScriptServiceImpl implements ScriptService {
             throw new AccessDeniedException("Access denied: Script belongs to a different organization.");
         }
 
-        activityService.record(
-            script.getContent(),
-            user,
-            EventType.SCRIPT_DELETED,
-            EntityType.SCRIPT,
+        domainEventPublisher.publish(new ScriptDeletedEvent(
+            user.getId(),
+            user.getOrganizationId(),
+            script.getContent().getId(),
             script.getId(),
-            "Script version " + script.getVersion() + " deleted",
-            "{\"version\":" + script.getVersion() + "}"
-        );
+            script.getVersion()
+        ));
 
         scriptRepository.delete(script);
     }

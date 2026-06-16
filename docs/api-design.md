@@ -320,3 +320,18 @@ CreatorOps uses the standard **RFC 7807** specification to return clean, actiona
 ### 4.12. AI Brainstorming & Generation
 *   **`POST /api/v1/ai/contents/{contentId}/brainstorm`**: Ask AI Gateway to generate click hooks, title options, and outlining recommendations. Results are saved as an `AI_BRAINSTORM` ResearchItem.
 *   **`POST /api/v1/ai/contents/{contentId}/generate-script`**: Prompt AI Gateway to generate a conversation script draft based on compiled research context. Outlines are appended as Script Version 1.0.
+
+---
+
+## 5. Architectural API Operations (System Foundations)
+
+### 5.1. Request Correlation Trace
+Every client request passing through the servlet boundaries is evaluated for diagnostic tracking:
+*   **Request Header**: `X-Correlation-Id` (UUID text format). If the client supplies a trace ID, the system preserves and propagates it. If omitted, the server dynamically generates a new UUID.
+*   **Response Header**: `X-Correlation-Id`. The header is returned to client responses to coordinate tracing reports.
+*   **Thread/MDC Propagation**: The correlation ID automatically traverses async process barriers, showing up in logs for background operations.
+
+### 5.2. Local Caching Operations
+To optimize query performance for low-volatility entities, the REST layers leverage localized, read-through caching:
+*   **Cached Entities**: Organization, Brand, User Profile.
+*   **Cache Headers / Refresh**: Write operations (such as updates, additions, and deletions) immediately invalidate cache states, ensuring client reads remain correct. Highly volatile content entities (Content, Task, Assignment, Script, Research, AI, Assets) are explicitly uncached at the server level.

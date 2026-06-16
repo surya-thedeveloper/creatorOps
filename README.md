@@ -55,20 +55,25 @@ graph TD
     subgraph Backend [Spring Boot Backend Application]
         API_Gateway --> Controllers[Rest Controllers]
         Controllers --> Services[Domain Services]
+        Services --> EventPublisher[Domain Event Publisher]
+        EventPublisher -->|Application Events| EventListener[Activity Event Listener]
+        EventListener -->|Async Log| ActivityService[Activity Service]
         Services --> Repositories[JPA Repositories]
         Services --> AI_Gateway[AI Provider Gateway]
     end
     
     Repositories -->|JDBC| PostgreSQL[(PostgreSQL Database)]
     AI_Gateway -->|SDK/REST| GeminiAPI[Google Gemini API]
-    AI_Gateway -.->|Future| OtherLLMs[OpenAI / Claude / Ollama]
 ```
 
 ### Key Architectural Guidelines
 1.  **Multi-Tenancy Hierarchy**: Direct mapping of `Organization` $\rightarrow$ `Brand` $\rightarrow$ `Content`.
 2.  **Stateless API**: Backend is a stateless REST API secured via JSON Web Tokens (JWT).
-3.  **Pluggable AI Integration**: An abstraction layer decouples core business logic from specific AI provider SDKs, enabling seamless fallback and multi-model routing.
-4.  **Database Integrity**: Strict conventions including BIGINT primary keys, UTC timestamp storage (`TIMESTAMPTZ`), VARCHAR-based enum serialization, and transactional safety.
+3.  **Event-Driven Domain Decoupling**: Business services publish transactional domain events (`DomainEvent`) to a publisher context. An asynchronous event listener converts these into chronological activities post-commit, isolating business states from auditing logic.
+4.  **Asynchronous Execution & MDC Preservation**: Background workloads are dispatched to a configured task pool (`creatorOpsAsyncExecutor`) utilizing `MdcTaskDecorator` to copy thread context maps (correlationId, userId, orgId) automatically to prevent diagnostic loss.
+5.  **Low-Volatility Caching Boundaries**: Highly volatile resources remain cache-free, while read-intensive, low-volatility database entities (`organizations`, `brands`, `users`) are cached locally using Spring Caching and ConcurrentMapCacheManager. Caches are invalidated immediately upon write operations.
+6.  **Pluggable AI Integration**: An abstraction layer decouples core business logic from specific AI provider SDKs, enabling seamless fallback and multi-model routing.
+7.  **Database Integrity**: Strict conventions including BIGINT primary keys, UTC timestamp storage (`TIMESTAMPTZ`), VARCHAR-based enum serialization, and transactional safety.
 
 ---
 

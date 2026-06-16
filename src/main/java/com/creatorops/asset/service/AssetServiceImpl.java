@@ -1,8 +1,9 @@
 package com.creatorops.asset.service;
 
-import com.creatorops.activity.entity.EntityType;
-import com.creatorops.activity.entity.EventType;
-import com.creatorops.activity.service.ActivityService;
+import com.creatorops.common.event.DomainEventPublisher;
+import com.creatorops.common.event.AssetCreatedEvent;
+import com.creatorops.common.event.AssetUpdatedEvent;
+import com.creatorops.common.event.AssetDeletedEvent;
 import com.creatorops.asset.dto.AssetRequest;
 import com.creatorops.asset.dto.AssetResponse;
 import com.creatorops.asset.entity.Asset;
@@ -42,17 +43,17 @@ public class AssetServiceImpl implements AssetService {
     private final AssetRepository assetRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
-    private final ActivityService activityService;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Autowired
     public AssetServiceImpl(AssetRepository assetRepository,
                             ContentRepository contentRepository,
                             UserRepository userRepository,
-                            ActivityService activityService) {
+                            DomainEventPublisher domainEventPublisher) {
         this.assetRepository = assetRepository;
         this.contentRepository = contentRepository;
         this.userRepository = userRepository;
-        this.activityService = activityService;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -84,16 +85,14 @@ public class AssetServiceImpl implements AssetService {
 
         Asset saved = assetRepository.save(asset);
 
-        // Record in timeline
-        activityService.record(
-            content,
-            user,
-            EventType.ASSET_CREATED,
-            EntityType.ASSET,
+        // Publish Domain Event
+        domainEventPublisher.publish(new AssetCreatedEvent(
+            user.getId(),
+            user.getOrganizationId(),
+            content.getId(),
             saved.getId(),
-            "Asset '" + saved.getName() + "' was added",
-            null
-        );
+            saved.getName()
+        ));
 
         return AssetResponse.fromEntity(saved);
     }
@@ -166,16 +165,14 @@ public class AssetServiceImpl implements AssetService {
 
         Asset updated = assetRepository.save(asset);
 
-        // Record in timeline
-        activityService.record(
-            updated.getContent(),
-            user,
-            EventType.ASSET_UPDATED,
-            EntityType.ASSET,
+        // Publish Domain Event
+        domainEventPublisher.publish(new AssetUpdatedEvent(
+            user.getId(),
+            user.getOrganizationId(),
+            updated.getContent().getId(),
             updated.getId(),
-            "Asset '" + updated.getName() + "' was updated",
-            null
-        );
+            updated.getName()
+        ));
 
         return AssetResponse.fromEntity(updated);
     }
@@ -200,16 +197,14 @@ public class AssetServiceImpl implements AssetService {
             throw new AccessDeniedException("Access denied: Contributors can only delete assets they created.");
         }
 
-        // Record in timeline before physically deleting
-        activityService.record(
-            asset.getContent(),
-            user,
-            EventType.ASSET_DELETED,
-            EntityType.ASSET,
+        // Publish Domain Event
+        domainEventPublisher.publish(new AssetDeletedEvent(
+            user.getId(),
+            user.getOrganizationId(),
+            asset.getContent().getId(),
             asset.getId(),
-            "Asset '" + asset.getName() + "' was deleted",
-            null
-        );
+            asset.getName()
+        ));
 
         assetRepository.delete(asset);
     }

@@ -19,9 +19,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
-import com.creatorops.activity.entity.EntityType;
-import com.creatorops.activity.entity.EventType;
-import com.creatorops.activity.service.ActivityService;
+import com.creatorops.common.event.DomainEventPublisher;
+import com.creatorops.common.event.AssignmentCreatedEvent;
+import com.creatorops.common.event.AssignmentUpdatedEvent;
+import com.creatorops.common.event.AssignmentStatusChangedEvent;
+import com.creatorops.common.event.AssignmentDeletedEvent;
 
 /**
  * <h3>Why this class exists</h3>
@@ -46,17 +48,17 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final ContentRepository contentRepository;
     private final UserRepository userRepository;
-    private final ActivityService activityService;
+    private final DomainEventPublisher domainEventPublisher;
 
     @Autowired
     public AssignmentServiceImpl(AssignmentRepository assignmentRepository,
                                  ContentRepository contentRepository,
                                  UserRepository userRepository,
-                                 ActivityService activityService) {
+                                 DomainEventPublisher domainEventPublisher) {
         this.assignmentRepository = assignmentRepository;
         this.contentRepository = contentRepository;
         this.userRepository = userRepository;
-        this.activityService = activityService;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @Override
@@ -104,15 +106,14 @@ public class AssignmentServiceImpl implements AssignmentService {
         org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
         log.info("Created assignment: contentId={}, assignedToUserId={}, type={}", saved.getContent().getId(), saved.getAssignedToUser().getId(), saved.getAssignmentType());
         org.slf4j.MDC.remove("entityId");
-        activityService.record(
-            content,
-            creator,
-            EventType.ASSIGNMENT_CREATED,
-            EntityType.ASSIGNMENT,
+        domainEventPublisher.publish(new AssignmentCreatedEvent(
+            creator.getId(),
+            creator.getOrganizationId(),
+            content.getId(),
             saved.getId(),
-            "Assignment for " + saved.getAssignmentType().name() + " assigned to " + saved.getAssignedToUser().getName() + " created",
-            null
-        );
+            saved.getAssignmentType().name(),
+            saved.getAssignedToUser().getName()
+        ));
         return AssignmentResponse.fromEntity(saved);
     }
 
@@ -208,15 +209,14 @@ public class AssignmentServiceImpl implements AssignmentService {
         org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
         log.info("Updated assignment: contentId={}, assignedToUserId={}, type={}", updated.getContent().getId(), updated.getAssignedToUser().getId(), updated.getAssignmentType());
         org.slf4j.MDC.remove("entityId");
-        activityService.record(
-            updated.getContent(),
-            updater,
-            EventType.ASSIGNMENT_UPDATED,
-            EntityType.ASSIGNMENT,
+        domainEventPublisher.publish(new AssignmentUpdatedEvent(
+            updater.getId(),
+            updater.getOrganizationId(),
+            updated.getContent().getId(),
             updated.getId(),
-            "Assignment for " + updated.getAssignmentType().name() + " assigned to " + updated.getAssignedToUser().getName() + " updated",
-            null
-        );
+            updated.getAssignmentType().name(),
+            updated.getAssignedToUser().getName()
+        ));
         return AssignmentResponse.fromEntity(updated);
     }
 
@@ -264,15 +264,14 @@ public class AssignmentServiceImpl implements AssignmentService {
         org.slf4j.MDC.put("entityId", String.valueOf(updated.getId()));
         log.info("Updated assignment status: oldStatus={}, newStatus={}", oldStatus, newStatus);
         org.slf4j.MDC.remove("entityId");
-        activityService.record(
-            updated.getContent(),
-            updater,
-            EventType.ASSIGNMENT_STATUS_CHANGED,
-            EntityType.ASSIGNMENT,
+        domainEventPublisher.publish(new AssignmentStatusChangedEvent(
+            updater.getId(),
+            updater.getOrganizationId(),
+            updated.getContent().getId(),
             updated.getId(),
-            "Assignment status changed from " + oldStatus + " to " + newStatus,
-            "{\"oldStatus\":\"" + oldStatus + "\",\"newStatus\":\"" + newStatus + "\"}"
-        );
+            oldStatus.name(),
+            newStatus.name()
+        ));
         return AssignmentResponse.fromEntity(updated);
     }
 
@@ -295,15 +294,14 @@ public class AssignmentServiceImpl implements AssignmentService {
             throw new AccessDeniedException("Access denied: Assignment belongs to a different organization.");
         }
 
-        activityService.record(
-            assignment.getContent(),
-            deleter,
-            EventType.ASSIGNMENT_DELETED,
-            EntityType.ASSIGNMENT,
+        domainEventPublisher.publish(new AssignmentDeletedEvent(
+            deleter.getId(),
+            deleter.getOrganizationId(),
+            assignment.getContent().getId(),
             assignment.getId(),
-            "Assignment for " + assignment.getAssignmentType().name() + " assigned to " + assignment.getAssignedToUser().getName() + " deleted",
-            null
-        );
+            assignment.getAssignmentType().name(),
+            assignment.getAssignedToUser().getName()
+        ));
 
         org.slf4j.MDC.put("entityId", String.valueOf(assignment.getId()));
         log.info("Deleted assignment: assignmentId={}", assignment.getId());
