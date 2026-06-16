@@ -442,6 +442,23 @@ When executing a coding task, the implementing AI agent **must** append a copy o
     *   Exposed my-work endpoints (`GET /api/assignments/my`) filtered by optional status parameter to support clean list loading on dashboard runs.
 *   **Follow-up Work**: Proceed to implement subsequent modules (e.g. Task/Checklist module).
 
+---
+
+## CreatorOps Milestone Releases
+
+### Milestone: v0.1-collaboration-foundation
+*   **Completed Modules**:
+    *   Authentication
+    *   User Management
+    *   Organization
+    *   Brand
+    *   Content
+    *   Research
+    *   Script
+    *   Assignment
+*   **Status**: Milestone Tagged
+
+
 
 
 
