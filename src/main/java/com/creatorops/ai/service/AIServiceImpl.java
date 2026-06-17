@@ -18,6 +18,9 @@ import com.creatorops.script.service.ScriptService;
 import com.creatorops.common.event.DomainEventPublisher;
 import com.creatorops.common.event.AiBrainstormGeneratedEvent;
 import com.creatorops.common.event.AiScriptGeneratedEvent;
+import com.creatorops.common.metrics.MetricsService;
+import com.creatorops.common.feature.FeatureFlagService;
+import com.creatorops.common.exception.FeatureDisabledException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
@@ -67,6 +70,8 @@ public class AIServiceImpl implements AIService {
     private final ScriptService scriptService;
     private final DomainEventPublisher domainEventPublisher;
     private final AIProvider aiProvider;
+    private final MetricsService metricsService;
+    private final FeatureFlagService featureFlagService;
 
     @Autowired
     public AIServiceImpl(UserRepository userRepository,
@@ -74,13 +79,17 @@ public class AIServiceImpl implements AIService {
                          ResearchItemRepository researchItemRepository,
                          ScriptService scriptService,
                          DomainEventPublisher domainEventPublisher,
-                         AIProvider aiProvider) {
+                         AIProvider aiProvider,
+                         MetricsService metricsService,
+                         FeatureFlagService featureFlagService) {
         this.userRepository = userRepository;
         this.contentRepository = contentRepository;
         this.researchItemRepository = researchItemRepository;
         this.scriptService = scriptService;
         this.domainEventPublisher = domainEventPublisher;
         this.aiProvider = aiProvider;
+        this.metricsService = metricsService;
+        this.featureFlagService = featureFlagService;
     }
 
     private User validateTenant(Long contentId, String userEmail, Content[] contentOut) {
@@ -101,98 +110,130 @@ public class AIServiceImpl implements AIService {
     @Override
     @Transactional
     public ResearchItemResponse generateBrainstorm(Long contentId, String userEmail) {
-        Content[] contentWrapper = new Content[1];
-        User user = validateTenant(contentId, userEmail, contentWrapper);
-        Content content = contentWrapper[0];
-
-        // Fetch all research items for prompt compilation
-        List<ResearchItem> allResearch = researchItemRepository.findByContentId(contentId, PageRequest.of(0, 1000)).getContent();
-        List<ResearchItem> notes = allResearch.stream().filter(r -> r.getType() == ResearchItemType.NOTE).toList();
-        List<ResearchItem> links = allResearch.stream().filter(r -> r.getType() == ResearchItemType.LINK).toList();
-        List<ResearchItem> existingBrainstorms = allResearch.stream().filter(r -> r.getType() == ResearchItemType.AI_BRAINSTORM).toList();
-
-        // 1. Build prompt
-        String prompt = PromptBuilder.buildBrainstormPrompt(content, notes, links, existingBrainstorms);
-
-        // 2. Invoke provider abstraction
-        String generatedResult = aiProvider.generateBrainstorm(prompt);
-        if (generatedResult == null || generatedResult.isBlank()) {
-            throw new AiGenerationException("AI provider generated an empty brainstorm outline.");
+        if (featureFlagService != null && !featureFlagService.isAiBrainstormEnabled()) {
+            throw new FeatureDisabledException("AI Brainstorm feature is currently disabled.");
         }
+        if (metricsService != null) {
+            metricsService.incrementAiRequests();
+        }
+        try {
+            Content[] contentWrapper = new Content[1];
+            User user = validateTenant(contentId, userEmail, contentWrapper);
+            Content content = contentWrapper[0];
 
-        // 3. Save as ResearchItem of type AI_BRAINSTORM
-        String timestamp = OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-        ResearchItem brainstormItem = new ResearchItem(
-                content,
-                user,
-                ResearchItemType.AI_BRAINSTORM,
-                "AI Brainstorm - " + timestamp,
-                generatedResult,
-                null
-        );
+            // Fetch all research items for prompt compilation
+            List<ResearchItem> allResearch = researchItemRepository.findByContentId(contentId, PageRequest.of(0, 1000)).getContent();
+            List<ResearchItem> notes = allResearch.stream().filter(r -> r.getType() == ResearchItemType.NOTE).toList();
+            List<ResearchItem> links = allResearch.stream().filter(r -> r.getType() == ResearchItemType.LINK).toList();
+            List<ResearchItem> existingBrainstorms = allResearch.stream().filter(r -> r.getType() == ResearchItemType.AI_BRAINSTORM).toList();
 
-        ResearchItem saved = researchItemRepository.save(brainstormItem);
-        org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
-        log.info("AI brainstorm generated: title={}, contentId={}", saved.getTitle(), contentId);
-        org.slf4j.MDC.remove("entityId");
+            // 1. Build prompt
+            String prompt = PromptBuilder.buildBrainstormPrompt(content, notes, links, existingBrainstorms);
 
-        // 4. Publish Domain Event
-        domainEventPublisher.publish(new AiBrainstormGeneratedEvent(
-                user.getId(),
-                user.getOrganizationId(),
-                content.getId(),
-                saved.getId(),
-                saved.getTitle()
-        ));
+            // 2. Invoke provider abstraction
+            String generatedResult = aiProvider.generateBrainstorm(prompt);
+            if (generatedResult == null || generatedResult.isBlank()) {
+                throw new AiGenerationException("AI provider generated an empty brainstorm outline.");
+            }
 
-        return ResearchItemResponse.fromEntity(saved);
+            // 3. Save as ResearchItem of type AI_BRAINSTORM
+            String timestamp = OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            ResearchItem brainstormItem = new ResearchItem(
+                    content,
+                    user,
+                    ResearchItemType.AI_BRAINSTORM,
+                    "AI Brainstorm - " + timestamp,
+                    generatedResult,
+                    null
+            );
+
+            ResearchItem saved = researchItemRepository.save(brainstormItem);
+            org.slf4j.MDC.put("entityId", String.valueOf(saved.getId()));
+            log.info("AI brainstorm generated: title={}, contentId={}", saved.getTitle(), contentId);
+            org.slf4j.MDC.remove("entityId");
+
+            // 4. Publish Domain Event
+            domainEventPublisher.publish(new AiBrainstormGeneratedEvent(
+                    user.getId(),
+                    user.getOrganizationId(),
+                    content.getId(),
+                    saved.getId(),
+                    saved.getTitle()
+            ));
+
+            if (metricsService != null) {
+                metricsService.incrementAiSuccess();
+            }
+            return ResearchItemResponse.fromEntity(saved);
+        } catch (Exception e) {
+            if (metricsService != null) {
+                metricsService.incrementAiFailures();
+            }
+            throw e;
+        }
     }
 
     @Override
     @Transactional
     public ScriptResponse generateScript(Long contentId, String userEmail) {
-        Content[] contentWrapper = new Content[1];
-        User user = validateTenant(contentId, userEmail, contentWrapper);
-        Content content = contentWrapper[0];
-
-        // Fetch all research items for prompt compilation
-        List<ResearchItem> allResearch = researchItemRepository.findByContentId(contentId, PageRequest.of(0, 1000)).getContent();
-        List<ResearchItem> notes = allResearch.stream().filter(r -> r.getType() == ResearchItemType.NOTE).toList();
-        List<ResearchItem> links = allResearch.stream().filter(r -> r.getType() == ResearchItemType.LINK).toList();
-        List<ResearchItem> brainstorms = allResearch.stream().filter(r -> r.getType() == ResearchItemType.AI_BRAINSTORM).toList();
-
-        // 1. Build prompt
-        String prompt = PromptBuilder.buildScriptPrompt(content, notes, links, brainstorms);
-
-        // 2. Invoke provider abstraction
-        String generatedScript = aiProvider.generateScript(prompt);
-        if (generatedScript == null || generatedScript.isBlank()) {
-            throw new AiGenerationException("AI provider generated an empty script draft.");
+        if (featureFlagService != null && !featureFlagService.isAiScriptEnabled()) {
+            throw new FeatureDisabledException("AI Script feature is currently disabled.");
         }
+        if (metricsService != null) {
+            metricsService.incrementAiRequests();
+        }
+        try {
+            Content[] contentWrapper = new Content[1];
+            User user = validateTenant(contentId, userEmail, contentWrapper);
+            Content content = contentWrapper[0];
 
-        // 3. Create script version via ScriptService
-        ScriptRequest scriptRequest = new ScriptRequest(
-                DocumentType.INTERNAL,
-                generatedScript,
-                null,
-                null,
-                generatedScript
-        );
+            // Fetch all research items for prompt compilation
+            List<ResearchItem> allResearch = researchItemRepository.findByContentId(contentId, PageRequest.of(0, 1000)).getContent();
+            List<ResearchItem> notes = allResearch.stream().filter(r -> r.getType() == ResearchItemType.NOTE).toList();
+            List<ResearchItem> links = allResearch.stream().filter(r -> r.getType() == ResearchItemType.LINK).toList();
+            List<ResearchItem> brainstorms = allResearch.stream().filter(r -> r.getType() == ResearchItemType.AI_BRAINSTORM).toList();
 
-        ScriptResponse scriptResponse = scriptService.createScript(contentId, userEmail, scriptRequest);
-        org.slf4j.MDC.put("entityId", String.valueOf(scriptResponse.id()));
-        log.info("AI script draft generated: version={}, contentId={}", scriptResponse.version(), contentId);
-        org.slf4j.MDC.remove("entityId");
+            // 1. Build prompt
+            String prompt = PromptBuilder.buildScriptPrompt(content, notes, links, brainstorms);
 
-        // 4. Publish Domain Event
-        domainEventPublisher.publish(new AiScriptGeneratedEvent(
-                user.getId(),
-                user.getOrganizationId(),
-                content.getId(),
-                scriptResponse.id(),
-                scriptResponse.version()
-        ));
+            // 2. Invoke provider abstraction
+            String generatedScript = aiProvider.generateScript(prompt);
+            if (generatedScript == null || generatedScript.isBlank()) {
+                throw new AiGenerationException("AI provider generated an empty script draft.");
+            }
 
-        return scriptResponse;
+            // 3. Create script version via ScriptService
+            ScriptRequest scriptRequest = new ScriptRequest(
+                    DocumentType.INTERNAL,
+                    generatedScript,
+                    null,
+                    null,
+                    generatedScript
+            );
+
+            ScriptResponse scriptResponse = scriptService.createScript(contentId, userEmail, scriptRequest);
+            org.slf4j.MDC.put("entityId", String.valueOf(scriptResponse.id()));
+            log.info("AI script draft generated: version={}, contentId={}", scriptResponse.version(), contentId);
+            org.slf4j.MDC.remove("entityId");
+
+            // 4. Publish Domain Event
+            domainEventPublisher.publish(new AiScriptGeneratedEvent(
+                    user.getId(),
+                    user.getOrganizationId(),
+                    content.getId(),
+                    scriptResponse.id(),
+                    scriptResponse.version()
+            ));
+
+            if (metricsService != null) {
+                metricsService.incrementAiSuccess();
+            }
+            return scriptResponse;
+        } catch (Exception e) {
+            if (metricsService != null) {
+                metricsService.incrementAiFailures();
+            }
+            throw e;
+        }
     }
 }

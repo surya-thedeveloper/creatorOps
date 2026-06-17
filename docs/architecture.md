@@ -330,3 +330,87 @@ We use a standard, local `ConcurrentMapCacheManager`. No external caching server
 To enforce data consistency:
 *   `@Cacheable` caches query values on reads.
 *   `@CacheEvict` invalidates the specific key (or clears the entire namespace via `allEntries = true`) on writes (creates, updates, deletes). For example, updating an organization evicts its cache key, and creating a brand clears the `brands` namespace to invalidate list caches.
+
+---
+
+## 11. Resilience Strategy (Resilience4j Gateway)
+
+To protect external API operations (e.g., Google Gemini AI generation) from downstream timeouts, rate-limiting, and network outages, we integrate Resilience4j.
+
+### Fault Tolerance Patterns
+*   **Circuit Breaker**: Isolates Gemini integration under the `geminiAI` key. The circuit opens automatically when the failure rate exceeds 50% within a minimum of 5 consecutive calls. Once open, it fast-fails incoming requests for 10 seconds before transitioning to `HALF_OPEN` to probe system health.
+*   **Retry with Exponential Backoff**: Retries failed calls up to 3 times. The backoff interval begins at 500ms and scales exponentially (multiplier: 2.0) to cushion downstream rate limits.
+*   **Request Timeouts**: Configured connection (5 seconds) and read (15 seconds) timeouts directly on `RestTemplate` to prevent thread pools from hanging indefinitely.
+*   **Fallback Isolation**: Intercepts downstream HTTP exceptions (e.g., 429 Rate Limits, 503 Outages, `CallNotPermittedException`) and maps them to clean application exceptions (`AiGenerationException`) displaying friendly messages and hiding raw JSON/vendor details from users.
+
+---
+
+## 12. Dynamic Feature Flags
+
+To permit light, configuration-driven toggles for specific modules, we implement a lightweight Feature Flags system.
+
+### Properties and Scope
+*   **Flags Managed**:
+    *   `creatorops.features.ai-enabled`: Master toggle for all AI features.
+    *   `creatorops.features.ai-brainstorm-enabled`: Toggles AI Hook/Outlining endpoints.
+    *   `creatorops.features.ai-script-enabled`: Toggles AI Script Drafting endpoints.
+    *   `creatorops.features.analytics-enabled`: Toggles Analytics Dashboard queries.
+*   **Service Evaluation**: Services (e.g., `AIServiceImpl`, `AnalyticsServiceImpl`) consult `FeatureFlagService` before executing logic. If disabled, a `FeatureDisabledException` is thrown, which the `GlobalExceptionHandler` converts to an RFC 7807 `403 Forbidden` response.
+*   **Design Decision**: Fully environment-variable driven (in `application.yml`). Database-backed or remote management consoles are deferred to minimize dependency footprint.
+
+---
+
+## 13. Task Scheduling Infrastructure
+
+To orchestrate background maintenance and periodic tasks, scheduling infrastructure is enabled via `@EnableScheduling`.
+
+### Configuration Details
+*   **Task Scheduler Pool**: Configured a `ThreadPoolTaskScheduler` with a pool size of 5 and thread prefix `creatorops-scheduler-` to avoid task starvation.
+*   **Baseline Infrastructure Jobs**:
+    *   `DailyHealthSummaryJob`: Periodic cron running every midnight to check and log backend health.
+    *   `OverdueContentScannerJob`: Scans for overdue content cards every 15 minutes and writes logs.
+*   **Future Uses**: Easily extensible to support task reminders, automated publishing triggers, cache cleanups, and analytics aggregation jobs.
+
+---
+
+## 14. Business Metrics & Observability
+
+To complement infrastructure metrics provided by Spring Boot Actuator, we define application-level business metrics.
+
+### Custom Micrometer Meters
+Custom counters are registered under the Micrometer `MeterRegistry` and exposed via Actuator's `/actuator/metrics`:
+*   `creatorops.ai.requests` / `creatorops.ai.success` / `creatorops.ai.failures`: Track AI provider operations.
+*   `creatorops.brainstorms.generated` / `creatorops.scripts.generated`: Track AI content production output.
+*   `creatorops.content.created` / `creatorops.assignments.created`: Track standard entity creations.
+*   `creatorops.tasks.completed`: Track checklist actions marked as `DONE`.
+*   `creatorops.ai.circuit.open` / `creatorops.ai.retry.count`: Expose Resilience4j operational performance.
+
+---
+
+## 15. AI Idempotency Protection
+
+To prevent double-billing and duplicate resource generation due to browser double-clicks or network retries, an idempotency engine guards AI endpoints.
+
+### Lifecycle Flow
+1.  **Header Interception**: `IdempotencyFilter` intercepts POST calls containing an `Idempotency-Key` header on AI endpoints.
+2.  **In-Progress Locking**: If the key is already in the thread-safe `ConcurrentHashMap` with state `IN_PROGRESS`, the request is rejected with `409 Conflict`.
+3.  **Completion Caching**: If the state is `COMPLETED`, the filter intercepts and directly writes the cached response payload, headers, and status code to the client.
+4.  **Automatic Eviction**: Successful `2xx` responses are stored, while failure states are immediately evicted to permit user retries. A background scheduler runs every hour to clean records older than 24 hours.
+
+---
+
+## 16. Audit Metadata & Client Privacy
+
+Activity logs are enriched with request-level metadata while maintaining strict GDPR/privacy compliance.
+
+### Collected Scope
+The `AuditMetadataFilter` extracts and populates Logback's `MDC` with:
+*   `requestId` (Unique UUID for correlation mapping)
+*   `userAgent` (Request origin client info)
+*   `clientIp` (Masked network address)
+
+### Privacy Hardening (IP Masking)
+To prevent storing PII in database tables:
+*   **IPv4 Addresses**: The last octet is zeroed out (e.g., `192.168.1.123` $\rightarrow$ `192.168.1.0`).
+*   **IPv6 Addresses**: The last 80 bits are zeroed out (e.g., `2001:0db8:85a3:0000:0000:8a2e:0370:7334` $\rightarrow$ `2001:db8:85a3::`).
+*   **MDC Merging**: The enriched MDC context is asynchronously mapped to the Activity event listener post-commit, merging metadata into the activity's JSON payloads.

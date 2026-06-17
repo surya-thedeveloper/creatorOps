@@ -63,6 +63,11 @@ info:
 # AI Rate Limiting (Bucket4j Config)
 # -------------------------------------------------------------------------
 creatorops:
+  features:
+    ai-enabled: ${FEATURE_AI_ENABLED:true}
+    ai-brainstorm-enabled: ${FEATURE_AI_BRAINSTORM_ENABLED:true}
+    ai-script-enabled: ${FEATURE_AI_SCRIPT_ENABLED:true}
+    analytics-enabled: ${FEATURE_ANALYTICS_ENABLED:true}
   ai:
     rate-limit:
       capacity: ${AI_RATE_LIMIT_CAPACITY:5}

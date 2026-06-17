@@ -150,6 +150,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(FeatureDisabledException.class)
+    public ResponseEntity<ErrorResponse> handleFeatureDisabledException(
+            FeatureDisabledException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                OffsetDateTime.now(),
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""),
+                null
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(com.creatorops.ai.exception.AiGenerationException.class)
     public ResponseEntity<ErrorResponse> handleAiGenerationException(
             com.creatorops.ai.exception.AiGenerationException ex, WebRequest request) {

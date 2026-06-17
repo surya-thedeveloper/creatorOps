@@ -117,8 +117,8 @@ docker compose up --build --force-recreate
 
 All values **must** be set. No defaults are provided for secrets.
 
-| Variable | Description | Example |
-|----------|-------------|---------|
+| Variable | Description | Example / Default |
+|----------|-------------|-------------------|
 | `SPRING_PROFILES_ACTIVE` | Spring profile to activate | `prod` |
 | `DB_HOST` | PostgreSQL host | `db.mycloud.com` |
 | `DB_PORT` | PostgreSQL port | `5432` |
@@ -130,6 +130,10 @@ All values **must** be set. No defaults are provided for secrets.
 | `JWT_REFRESH_EXPIRATION_MS` | Refresh token TTL in ms | `604800000` (7 days) |
 | `GEMINI_API_KEY` | Google Gemini AI key | `AIza...` |
 | `AI_RATE_LIMIT_CAPACITY` | AI calls per minute per user | `5` |
+| `FEATURE_AI_ENABLED` | Global AI feature toggle | `true` |
+| `FEATURE_AI_BRAINSTORM_ENABLED` | AI Brainstorm toggle | `true` |
+| `FEATURE_AI_SCRIPT_ENABLED` | AI Script Generation toggle | `true` |
+| `FEATURE_ANALYTICS_ENABLED` | Analytics Dashboard toggle | `true` |
 
 ### Build production JAR
 

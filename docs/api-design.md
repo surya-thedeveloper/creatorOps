@@ -335,3 +335,30 @@ Every client request passing through the servlet boundaries is evaluated for dia
 To optimize query performance for low-volatility entities, the REST layers leverage localized, read-through caching:
 *   **Cached Entities**: Organization, Brand, User Profile.
 *   **Cache Headers / Refresh**: Write operations (such as updates, additions, and deletions) immediately invalidate cache states, ensuring client reads remain correct. Highly volatile content entities (Content, Task, Assignment, Script, Research, AI, Assets) are explicitly uncached at the server level.
+
+### 5.3. Idempotency Key Control (AI Endpoints Only)
+To prevent duplicate content/script creation, AI generation endpoints accept a client-provided idempotency key.
+*   **Target Endpoints**:
+    *   `POST /api/v1/ai/contents/{contentId}/brainstorm`
+    *   `POST /api/v1/ai/contents/{contentId}/generate-script`
+*   **Request Header**: `Idempotency-Key` (e.g., `Idempotency-Key: idemp-uuid-12345`).
+*   **Responses**:
+    *   *First Request*: Processed normally. Returns `200 OK` or `201 Created` with results, which are cached for 24 hours.
+    *   *Duplicate Request (Completed)*: Returns the cached response body, headers, and status code directly without re-invoking the AI provider.
+    *   *Duplicate Request (In Progress)*: Returns `409 Conflict` with a JSON warning: `{"message":"A request with the same idempotency key is already in progress."}`.
+    *   *Failed Request*: If the first request returns a non-2xx error (e.g., 5xx downstream timeout), the entry is removed from the cache to allow the user/client to retry immediately.
+
+### 5.4. Business Metrics & Observability (Actuator)
+In addition to JVM and platform stats, the system registers custom operational metric meters.
+*   **Metric Retrieval**: `GET /actuator/metrics/{metricName}` (e.g., `GET /actuator/metrics/creatorops.ai.requests`).
+*   **Key Custom Metrics**:
+    *   `creatorops.ai.requests`: Total attempts to invoke the AI provider.
+    *   `creatorops.ai.success`: Successful AI provider executions.
+    *   `creatorops.ai.failures`: Failed AI provider executions (mapped to exceptions).
+    *   `creatorops.brainstorms.generated`: Total brainstorm outline records successfully saved.
+    *   `creatorops.scripts.generated`: Total script draft records successfully saved.
+    *   `creatorops.content.created`: Total content cards initialized in the workspace.
+    *   `creatorops.assignments.created`: Total assignments created.
+    *   `creatorops.tasks.completed`: Total tasks marked completed (status = `DONE`).
+    *   `creatorops.ai.circuit.open`: Total transitions of the Resilience4j Circuit Breaker to the OPEN state.
+    *   `creatorops.ai.retry.count`: Total Resilience4j retry attempts triggered due to transient failures.

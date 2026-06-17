@@ -15,6 +15,8 @@ import com.creatorops.task.entity.TaskStatus;
 import com.creatorops.task.entity.TaskPriority;
 import com.creatorops.asset.repository.AssetRepository;
 import com.creatorops.common.exception.ResourceNotFoundException;
+import com.creatorops.common.feature.FeatureFlagService;
+import com.creatorops.common.exception.FeatureDisabledException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,18 +69,21 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final AssignmentRepository assignmentRepository;
     private final TaskRepository taskRepository;
     private final AssetRepository assetRepository;
+    private final FeatureFlagService featureFlagService;
 
     @Autowired
     public AnalyticsServiceImpl(UserRepository userRepository,
                                 ContentRepository contentRepository,
                                 AssignmentRepository assignmentRepository,
                                 TaskRepository taskRepository,
-                                AssetRepository assetRepository) {
+                                AssetRepository assetRepository,
+                                FeatureFlagService featureFlagService) {
         this.userRepository = userRepository;
         this.contentRepository = contentRepository;
         this.assignmentRepository = assignmentRepository;
         this.taskRepository = taskRepository;
         this.assetRepository = assetRepository;
+        this.featureFlagService = featureFlagService;
     }
 
     private User getUser(String email) {
@@ -89,6 +94,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Override
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getDashboardSummary(String currentUserEmail) {
+        if (featureFlagService != null && !featureFlagService.isAnalyticsEnabled()) {
+            throw new FeatureDisabledException("Analytics feature is currently disabled.");
+        }
         User user = getUser(currentUserEmail);
         Long orgId = user.getOrganizationId();
         OffsetDateTime now = OffsetDateTime.now();
@@ -124,6 +132,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Override
     @Transactional(readOnly = true)
     public ContentAnalyticsResponse getContentAnalytics(String currentUserEmail) {
+        if (featureFlagService != null && !featureFlagService.isAnalyticsEnabled()) {
+            throw new FeatureDisabledException("Analytics feature is currently disabled.");
+        }
         User user = getUser(currentUserEmail);
         Long orgId = user.getOrganizationId();
 
@@ -169,6 +180,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Override
     @Transactional(readOnly = true)
     public AssignmentAnalyticsResponse getAssignmentAnalytics(String currentUserEmail) {
+        if (featureFlagService != null && !featureFlagService.isAnalyticsEnabled()) {
+            throw new FeatureDisabledException("Analytics feature is currently disabled.");
+        }
         User user = getUser(currentUserEmail);
         Long orgId = user.getOrganizationId();
 
@@ -202,6 +216,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Override
     @Transactional(readOnly = true)
     public TaskAnalyticsResponse getTaskAnalytics(String currentUserEmail) {
+        if (featureFlagService != null && !featureFlagService.isAnalyticsEnabled()) {
+            throw new FeatureDisabledException("Analytics feature is currently disabled.");
+        }
         User user = getUser(currentUserEmail);
         Long orgId = user.getOrganizationId();
         OffsetDateTime now = OffsetDateTime.now();
@@ -238,6 +255,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Override
     @Transactional(readOnly = true)
     public PublishingAnalyticsResponse getPublishingAnalytics(String currentUserEmail) {
+        if (featureFlagService != null && !featureFlagService.isAnalyticsEnabled()) {
+            throw new FeatureDisabledException("Analytics feature is currently disabled.");
+        }
         User user = getUser(currentUserEmail);
         Long orgId = user.getOrganizationId();
         OffsetDateTime now = OffsetDateTime.now();

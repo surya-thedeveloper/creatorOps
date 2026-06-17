@@ -59,6 +59,8 @@ public class ActivityEventListener {
                 return;
             }
 
+            String enrichedMetadata = buildMetadataWithAudit(event.getMetadataJson());
+
             activityService.record(
                 content,
                 user,
@@ -66,7 +68,7 @@ public class ActivityEventListener {
                 event.getEntityType(),
                 event.getEntityId(),
                 event.getDescription(),
-                event.getMetadataJson()
+                enrichedMetadata
             );
 
             log.debug("Activity logged successfully for event {}", event.getEventId());
@@ -75,5 +77,38 @@ public class ActivityEventListener {
             log.error("Failed to log activity details for event {}", event.getEventId(), e);
             throw e; // Will be captured by the AsyncExceptionHandler
         }
+    }
+
+    private String buildMetadataWithAudit(String originalMetadataJson) {
+        String correlationId = org.slf4j.MDC.get("correlationId");
+        String requestId = org.slf4j.MDC.get("requestId");
+        String userAgent = org.slf4j.MDC.get("userAgent");
+        String clientIp = org.slf4j.MDC.get("clientIp");
+
+        String cId = correlationId != null ? correlationId : "unknown";
+        String rId = requestId != null ? requestId : "unknown";
+        String uAgent = userAgent != null ? userAgent.replace("\"", "\\\"") : "unknown";
+        String cIp = clientIp != null ? clientIp : "unknown";
+
+        String auditBlock = String.format(
+                "\"auditMetadata\":{\"correlationId\":\"%s\",\"requestId\":\"%s\",\"userAgent\":\"%s\",\"clientIp\":\"%s\"}",
+                cId, rId, uAgent, cIp
+        );
+
+        if (originalMetadataJson == null || originalMetadataJson.trim().isEmpty() || originalMetadataJson.equals("{}")) {
+            return "{" + auditBlock + "}";
+        }
+
+        String trimmed = originalMetadataJson.trim();
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            String inner = trimmed.substring(1, trimmed.length() - 1);
+            if (inner.trim().isEmpty()) {
+                return "{" + auditBlock + "}";
+            } else {
+                return "{" + inner + "," + auditBlock + "}";
+            }
+        }
+
+        return originalMetadataJson;
     }
 }
