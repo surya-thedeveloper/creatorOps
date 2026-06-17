@@ -782,5 +782,72 @@ Tests run: 140, Failures: 0, Errors: 0, Skipped: 0 — BUILD SUCCESS
 
 All 140 tests pass across all modules.
 
+---
 
+### 1.X Sprint 3 — Engineering Maturity & Deployment Readiness
+*   **Status**: Complete
+*   **Objective**: Operational excellence without new business features.
+
+#### Part 1 — OpenAPI / Swagger
+
+*   **Dependency Added**: `springdoc-openapi-starter-webmvc-ui:2.5.0` in `pom.xml`.
+*   **New File**: `src/main/java/com/creatorops/config/OpenApiConfig.java`
+    *   Defines API title, version, description, contact, servers (local + production).
+    *   Registers global JWT Bearer `SecurityScheme` — all authenticated endpoints show Authorize button.
+    *   Adds global `SecurityRequirement` so all operations are documented as requiring JWT by default.
+*   **Updated**: `SecurityConfig.java` — added `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**` to `permitAll()`.
+*   **Updated**: `application.yml` — added `springdoc` config block (UI path, operations sort, try-it-out enabled, actuator docs disabled).
+*   **Annotated**: All 14 controllers with `@Tag`, `@Operation`, `@ApiResponse`, `@SecurityRequirement`:
+    *   AuthController, UserController, OrganizationController, BrandController, ContentController
+    *   ResearchItemController, ScriptController, AssignmentController, TaskController, AssetController
+    *   ActivityController, CalendarController, AnalyticsController, AIController
+*   **Access**: `http://localhost:8080/swagger-ui/index.html` (disabled in `prod` profile).
+
+#### Part 2 — Docker Support
+
+*   **New File**: `Dockerfile` (multi-stage):
+    *   Stage 1 (`builder`): `maven:3.9-eclipse-temurin-17` — `dependency:go-offline` cache layer then `mvn package -DskipTests`.
+    *   Stage 2 (`runtime`): `eclipse-temurin:17-jre-alpine` — minimal JRE image (~200MB vs ~500MB).
+    *   Non-root user `creatorops` (uid 1001) for security.
+    *   `SPRING_PROFILES_ACTIVE=postgres` default, overridable via env.
+*   **New File**: `.dockerignore` — excludes `target/`, `.git/`, `.env*`, IDE files, docs.
+
+#### Part 3 — Docker Compose
+
+*   **New File**: `docker-compose.yml`
+    *   `postgres` service: `postgres:16-alpine`, named volume `creatorops-pgdata`, health check on `pg_isready`.
+    *   `creatorops-app` service: `depends_on: postgres: condition: service_healthy`, maps port `8080:8080`.
+    *   Both on `creatorops-network` bridge.
+*   **New File**: `.env.example` — documents all required env vars with safe placeholder values.
+
+#### Part 4 — GitHub Actions CI
+
+*   **New File**: `.github/workflows/ci.yml`
+    *   Triggers on push and PR to `main`/`master`.
+    *   Steps: `actions/checkout@v4` → `actions/setup-java@v4` (Java 17, Temurin) → `actions/cache@v4` (Maven `.m2`) → `mvn --batch-mode verify` → upload surefire reports.
+    *   No secrets required — tests use H2 in-memory DB.
+
+#### Part 5 — Environment Profiles
+
+*   **Updated**: `application.yml`
+    *   JWT secret moved to `${JWT_SECRET:...}` env var with dev-only default.
+    *   Gemini API key moved to `${GEMINI_API_KEY:}` env var.
+    *   AI rate limit capacity parameterized via `${AI_RATE_LIMIT_CAPACITY:5}`.
+    *   Added `management.endpoint.health.show-details: when-authorized`.
+*   **New File**: `application-local.yml` — local dev PostgreSQL with verbose SQL and DEBUG logging.
+*   **New File**: `application-dev.yml` — deployed dev/staging, all env vars required, INFO logging.
+*   **New File**: `application-prod.yml` — production; no defaults for secrets; Swagger disabled; HikariCP pool tuned; only health+info actuator exposed.
+
+#### Part 6 — Documentation
+
+*   **New File**: `docs/deployment.md` — full deployment guide covering all four modes (H2, local PG, Docker Compose, production).
+*   **Updated**: `AI_IMPLEMENTATION_LOG.md` (this entry).
+
+#### Final Test Run Results
+
+```
+Tests run: 140, Failures: 0, Errors: 0, Skipped: 0 — BUILD SUCCESS
+```
+
+All 140 tests pass. No regressions introduced.
 

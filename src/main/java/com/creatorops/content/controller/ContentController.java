@@ -6,6 +6,11 @@ import com.creatorops.content.dto.ContentResponse;
 import com.creatorops.content.entity.ContentStage;
 import com.creatorops.content.entity.ContentType;
 import com.creatorops.content.service.ContentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -41,6 +46,8 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/contents")
+@Tag(name = "Content", description = "Manage content cards — the core planning units. Each card tracks a piece of content from IDEA through PUBLISHED.")
+@SecurityRequirement(name = "bearerAuth")
 public class ContentController {
 
     private final ContentService contentService;
@@ -52,6 +59,12 @@ public class ContentController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Create content card", description = "Creates a new content planning card. ADMIN or MANAGER only.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Content created"),
+        @ApiResponse(responseCode = "400", description = "Validation failure"),
+        @ApiResponse(responseCode = "403", description = "Insufficient role")
+    })
     public ResponseEntity<ContentResponse> createContent(
             Authentication authentication,
             @Valid @RequestBody ContentRequest request) {
@@ -60,6 +73,11 @@ public class ContentController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get content by ID", description = "Returns a single content card by its ID. Tenant-isolated.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Content found"),
+        @ApiResponse(responseCode = "404", description = "Content not found")
+    })
     public ResponseEntity<ContentResponse> getContentById(
             @PathVariable Long id,
             Authentication authentication) {
@@ -68,6 +86,8 @@ public class ContentController {
     }
 
     @GetMapping
+    @Operation(summary = "Search content cards", description = "Returns paginated content scoped to the caller's org. Filter by brandId, stage, type, or title.")
+    @ApiResponse(responseCode = "200", description = "Content list returned")
     public ResponseEntity<PagedResponse<ContentResponse>> getContents(
             Authentication authentication,
             @RequestParam(required = false) Long brandId,
@@ -88,6 +108,11 @@ public class ContentController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Update content card", description = "Updates title, stage, description, or other fields of a content card.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Content updated"),
+        @ApiResponse(responseCode = "404", description = "Content not found")
+    })
     public ResponseEntity<ContentResponse> updateContent(
             @PathVariable Long id,
             @Valid @RequestBody ContentRequest request,
@@ -98,6 +123,8 @@ public class ContentController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Soft-delete content card", description = "Soft-deletes a content card. All child entities cascade.")
+    @ApiResponse(responseCode = "204", description = "Content deleted")
     public ResponseEntity<Void> deleteContent(
             @PathVariable Long id,
             Authentication authentication) {

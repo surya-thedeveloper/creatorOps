@@ -6,6 +6,10 @@ import com.creatorops.asset.entity.AssetSource;
 import com.creatorops.asset.entity.AssetType;
 import com.creatorops.asset.service.AssetService;
 import com.creatorops.common.response.PagedResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
+@Tag(name = "Assets", description = "Track production assets (videos, thumbnails, audio, documents) linked to content cards.")
+@SecurityRequirement(name = "bearerAuth")
 public class AssetController {
 
     private final AssetService assetService;
@@ -32,6 +38,8 @@ public class AssetController {
     }
 
     @PostMapping("/contents/{contentId}/assets")
+    @Operation(summary = "Add asset", description = "Registers an asset (URL reference) for a content card.")
+    @ApiResponse(responseCode = "201", description = "Asset created")
     public ResponseEntity<AssetResponse> createAsset(
             @PathVariable Long contentId,
             Authentication authentication,
@@ -41,6 +49,8 @@ public class AssetController {
     }
 
     @GetMapping("/assets/{id}")
+    @Operation(summary = "Get asset by ID")
+    @ApiResponse(responseCode = "200", description = "Asset returned")
     public ResponseEntity<AssetResponse> getAsset(
             @PathVariable Long id,
             Authentication authentication) {
@@ -49,6 +59,8 @@ public class AssetController {
     }
 
     @GetMapping("/contents/{contentId}/assets")
+    @Operation(summary = "List assets for a content card", description = "Optionally filter by assetType or assetSource.")
+    @ApiResponse(responseCode = "200", description = "Assets returned")
     public ResponseEntity<PagedResponse<AssetResponse>> getAssetsByContent(
             @PathVariable Long contentId,
             @RequestParam(required = false) AssetType assetType,
@@ -60,6 +72,8 @@ public class AssetController {
     }
 
     @PutMapping("/assets/{id}")
+    @Operation(summary = "Update asset")
+    @ApiResponse(responseCode = "200", description = "Asset updated")
     public ResponseEntity<AssetResponse> updateAsset(
             @PathVariable Long id,
             Authentication authentication,
@@ -69,6 +83,8 @@ public class AssetController {
     }
 
     @DeleteMapping("/assets/{id}")
+    @Operation(summary = "Delete asset")
+    @ApiResponse(responseCode = "204", description = "Asset deleted")
     public ResponseEntity<Void> deleteAsset(
             @PathVariable Long id,
             Authentication authentication) {

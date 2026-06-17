@@ -5,6 +5,10 @@ import com.creatorops.calendar.service.CalendarService;
 import com.creatorops.common.response.PagedResponse;
 import com.creatorops.content.entity.ContentStage;
 import com.creatorops.content.entity.ContentType;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +29,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/calendar")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
+@Tag(name = "Content Calendar", description = "Query scheduled and published content by date ranges. All results are scoped to the caller's organization.")
+@SecurityRequirement(name = "bearerAuth")
 public class CalendarController {
 
     private final CalendarService calendarService;
@@ -35,6 +41,8 @@ public class CalendarController {
     }
 
     @GetMapping
+    @Operation(summary = "Get calendar range", description = "Returns all content with due/publish dates between startDate and endDate. Filter by brandId, type, or stage.")
+    @ApiResponse(responseCode = "200", description = "Calendar items returned")
     public ResponseEntity<List<CalendarItemResponse>> getCalendarRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime endDate,
@@ -48,6 +56,8 @@ public class CalendarController {
     }
 
     @GetMapping("/upcoming")
+    @Operation(summary = "Get upcoming content", description = "Returns paginated content with future due dates in ascending order.")
+    @ApiResponse(responseCode = "200", description = "Upcoming content returned")
     public ResponseEntity<PagedResponse<CalendarItemResponse>> getUpcomingContent(
             Authentication authentication,
             Pageable pageable) {
@@ -56,6 +66,8 @@ public class CalendarController {
     }
 
     @GetMapping("/scheduled")
+    @Operation(summary = "Get scheduled content", description = "Returns content in SCHEDULED stage. Filter by brandId or type.")
+    @ApiResponse(responseCode = "200", description = "Scheduled content returned")
     public ResponseEntity<PagedResponse<CalendarItemResponse>> getScheduledContent(
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) ContentType contentType,
@@ -67,6 +79,8 @@ public class CalendarController {
     }
 
     @GetMapping("/published")
+    @Operation(summary = "Get published content", description = "Returns content in PUBLISHED stage. Optionally filter by publish date range.")
+    @ApiResponse(responseCode = "200", description = "Published content returned")
     public ResponseEntity<PagedResponse<CalendarItemResponse>> getPublishedContent(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime endDate,
@@ -78,6 +92,8 @@ public class CalendarController {
     }
 
     @GetMapping("/overdue")
+    @Operation(summary = "Get overdue content", description = "Returns content where due date has passed and stage is not PUBLISHED.")
+    @ApiResponse(responseCode = "200", description = "Overdue content returned")
     public ResponseEntity<List<CalendarItemResponse>> getOverdueContent(
             Authentication authentication) {
         List<CalendarItemResponse> response = calendarService.getOverdueContent(authentication.getName());

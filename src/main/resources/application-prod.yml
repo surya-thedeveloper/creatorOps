@@ -1,0 +1,64 @@
+# =========================================================================
+# application-prod.yml — Production Environment
+# =========================================================================
+# ALL values must be supplied via environment variables.
+# No defaults are provided for secrets. Missing values cause startup failure.
+# Deploy with: SPRING_PROFILES_ACTIVE=prod
+# =========================================================================
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USER}
+    password: ${DB_PASS}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate  # Never auto-create or drop — Flyway owns the schema
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+# Production Actuator: expose only health and info — not metrics publicly
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+# Production logging: minimize noise, capture errors and business events
+logging:
+  level:
+    root: WARN
+    com.creatorops: INFO
+    org.springframework.security: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: WARN
+    org.flywaydb: INFO
+
+# Swagger UI disabled in production (API docs not exposed publicly)
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

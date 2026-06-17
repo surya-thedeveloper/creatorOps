@@ -6,6 +6,10 @@ import com.creatorops.assignment.dto.AssignmentStatusRequest;
 import com.creatorops.assignment.entity.AssignmentStatus;
 import com.creatorops.assignment.service.AssignmentService;
 import com.creatorops.common.response.PagedResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,6 +37,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
+@Tag(name = "Assignments", description = "Assign contributors to content cards and manage assignment statuses.")
+@SecurityRequirement(name = "bearerAuth")
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
@@ -44,6 +50,8 @@ public class AssignmentController {
 
     @PostMapping("/contents/{contentId}/assignments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Create assignment", description = "Assigns a contributor to a content card. ADMIN or MANAGER only.")
+    @ApiResponse(responseCode = "201", description = "Assignment created")
     public ResponseEntity<AssignmentResponse> createAssignment(
             @PathVariable Long contentId,
             Authentication authentication,
@@ -53,6 +61,8 @@ public class AssignmentController {
     }
 
     @GetMapping("/assignments/{id}")
+    @Operation(summary = "Get assignment by ID")
+    @ApiResponse(responseCode = "200", description = "Assignment returned")
     public ResponseEntity<AssignmentResponse> getAssignmentById(
             @PathVariable Long id,
             Authentication authentication) {
@@ -61,6 +71,8 @@ public class AssignmentController {
     }
 
     @GetMapping("/contents/{contentId}/assignments")
+    @Operation(summary = "List assignments for a content card")
+    @ApiResponse(responseCode = "200", description = "Assignments returned")
     public ResponseEntity<PagedResponse<AssignmentResponse>> getAssignmentsByContent(
             @PathVariable Long contentId,
             Authentication authentication,
@@ -70,6 +82,8 @@ public class AssignmentController {
     }
 
     @GetMapping("/assignments/my")
+    @Operation(summary = "List my assignments", description = "Returns paginated assignments for the authenticated user. Filter by status.")
+    @ApiResponse(responseCode = "200", description = "My assignments returned")
     public ResponseEntity<PagedResponse<AssignmentResponse>> getMyAssignments(
             @RequestParam(required = false) AssignmentStatus status,
             Authentication authentication,
@@ -80,6 +94,8 @@ public class AssignmentController {
 
     @PutMapping("/assignments/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Update assignment")
+    @ApiResponse(responseCode = "200", description = "Assignment updated")
     public ResponseEntity<AssignmentResponse> updateAssignment(
             @PathVariable Long id,
             @Valid @RequestBody AssignmentRequest request,
@@ -89,6 +105,8 @@ public class AssignmentController {
     }
 
     @PatchMapping("/assignments/{id}/status")
+    @Operation(summary = "Update assignment status", description = "Transitions status between PENDING, IN_PROGRESS, COMPLETED.")
+    @ApiResponse(responseCode = "200", description = "Status updated")
     public ResponseEntity<AssignmentResponse> updateAssignmentStatus(
             @PathVariable Long id,
             @Valid @RequestBody AssignmentStatusRequest request,
@@ -99,6 +117,8 @@ public class AssignmentController {
 
     @DeleteMapping("/assignments/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Delete assignment")
+    @ApiResponse(responseCode = "204", description = "Assignment deleted")
     public ResponseEntity<Void> deleteAssignment(
             @PathVariable Long id,
             Authentication authentication) {

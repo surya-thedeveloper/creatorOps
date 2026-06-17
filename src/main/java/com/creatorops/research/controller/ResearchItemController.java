@@ -5,6 +5,11 @@ import com.creatorops.research.dto.ResearchItemRequest;
 import com.creatorops.research.dto.ResearchItemResponse;
 import com.creatorops.research.entity.ResearchItemType;
 import com.creatorops.research.service.ResearchItemService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,6 +38,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
+@Tag(name = "Research", description = "Manage research items (notes, links, AI brainstorm results) linked to content cards.")
+@SecurityRequirement(name = "bearerAuth")
 public class ResearchItemController {
 
     private final ResearchItemService researchItemService;
@@ -43,6 +50,8 @@ public class ResearchItemController {
     }
 
     @PostMapping("/contents/{contentId}/research")
+    @Operation(summary = "Add research item", description = "Creates a NOTE, LINK, or AI_BRAINSTORM research item for a content card.")
+    @ApiResponse(responseCode = "201", description = "Research item created")
     public ResponseEntity<ResearchItemResponse> createResearchItem(
             @PathVariable Long contentId,
             Authentication authentication,
@@ -52,6 +61,8 @@ public class ResearchItemController {
     }
 
     @GetMapping("/research/{id}")
+    @Operation(summary = "Get research item by ID")
+    @ApiResponse(responseCode = "200", description = "Research item returned")
     public ResponseEntity<ResearchItemResponse> getResearchItemById(
             @PathVariable Long id,
             Authentication authentication) {
@@ -60,6 +71,8 @@ public class ResearchItemController {
     }
 
     @GetMapping("/contents/{contentId}/research")
+    @Operation(summary = "List research items for a content card", description = "Optionally filter by type: NOTE, LINK, AI_BRAINSTORM.")
+    @ApiResponse(responseCode = "200", description = "Research items returned")
     public ResponseEntity<PagedResponse<ResearchItemResponse>> getResearchItemsByContent(
             @PathVariable Long contentId,
             @RequestParam(required = false) ResearchItemType type,
@@ -70,6 +83,8 @@ public class ResearchItemController {
     }
 
     @PutMapping("/research/{id}")
+    @Operation(summary = "Update research item")
+    @ApiResponse(responseCode = "200", description = "Research item updated")
     public ResponseEntity<ResearchItemResponse> updateResearchItem(
             @PathVariable Long id,
             @Valid @RequestBody ResearchItemRequest request,
@@ -79,6 +94,8 @@ public class ResearchItemController {
     }
 
     @DeleteMapping("/research/{id}")
+    @Operation(summary = "Delete research item")
+    @ApiResponse(responseCode = "204", description = "Research item deleted")
     public ResponseEntity<Void> deleteResearchItem(
             @PathVariable Long id,
             Authentication authentication) {

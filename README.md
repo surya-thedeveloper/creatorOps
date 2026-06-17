@@ -1,7 +1,9 @@
 # CreatorOps - Content Operations Platform
 
-[![Java Version](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/technologies/downloads/)
+[![Java Version](https://img.shields.io/badge/Java-17%20%2F%2021-orange.svg)](https://www.oracle.com/java/technologies/downloads/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Docker](https://img.shields.io/badge/Docker-enabled-blue.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![CI Build](https://github.com/surya-thedeveloper/creatorOps/actions/workflows/ci.yml/badge.svg)](https://github.com/surya-thedeveloper/creatorOps/actions)
 [![Ember.js](https://img.shields.io/badge/Ember-Octane-blue.svg)](https://emberjs.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -86,6 +88,7 @@ We maintain clean, detailed architecture and product specifications to guide dev
 *   🗄️ **[Database Schema Design](file:///S:/Dev/creatorOps/docs/database-design.md)**: ER Diagram, full entity dictionary, soft delete logic, indexing strategy, and auditing design.
 *   🔌 **[API Design Specification](file:///S:/Dev/creatorOps/docs/api-design.md)**: REST endpoint catalog, payload definitions, global error responses, filtering, sorting, and pagination rules.
 *   📝 **[Architecture Decision Records (ADR)](file:///S:/Dev/creatorOps/docs/decisions.md)**: Documented architectural decisions, tradeoffs, and accepted designs.
+*   🚀 **[Deployment Guide](file:///S:/Dev/creatorOps/docs/deployment.md)**: Step-by-step instructions for running the application in Default (H2), Local PostgreSQL, Docker Compose, or Production modes.
 
 ---
 
@@ -113,16 +116,81 @@ All core REST endpoints are versioned under `/api/v1` to support reliable API co
 
 ---
 
+## 🐳 Quick Start with Docker Compose
+
+Spin up the entire backend stack including a PostgreSQL database and the Spring Boot application using a single command:
+
+```bash
+# Clone the repository and navigate inside
+git clone https://github.com/surya-thedeveloper/creatorOps.git
+cd creatorOps
+
+# Setup configuration from template
+cp .env.example .env
+
+# Start database and application
+docker compose up --build
+```
+
+- **CreatorOps API**: Running at `http://localhost:8080/api/v1`
+- **Swagger UI**: Accessible at `http://localhost:8080/swagger-ui/index.html`
+- **Database**: PostgreSQL exposed locally on port `5432`
+
+---
+
+## 📖 API Documentation (OpenAPI/Swagger)
+
+CreatorOps leverages `springdoc-openapi` to automatically generate comprehensive REST API documentation.
+
+- **Interactive UI**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+- **OpenAPI 3.0 Specs JSON**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+
+> [!NOTE]
+> Swagger UI and OpenAPI documentation are enabled by default for developer ease, but are explicitly **disabled in the `prod` (production) profile** for security.
+
+---
+
+## ⚙️ Environment Configuration Profiles
+
+The application defines environment-specific property files matching runtime needs:
+
+*   `default`: Embedded H2 database configuration. Zero-dependency setup ideal for unit tests and local mock testing.
+*   `local`: Connects to local PostgreSQL instance, with Hibernate SQL logging enabled and verbose logging on debug packages.
+*   `postgres` (Docker Compose): Connects to containerized PostgreSQL. Environment credentials loaded from `.env` or system variables.
+*   `dev` (Staging): Staging/test environments.
+*   `prod` (Production): Production configurations. Disables Swagger, secures actuator endpoints, enforces non-default database and JWT credentials, and optimizes the Hikari Connection Pool.
+
+---
+
+## 🛠️ Continuous Integration (CI)
+
+A GitHub Actions workflow is set up to automate code quality verification on every check-in:
+
+- **CI Trigger**: Every `push` and `pull_request` on `main`/`master` branches.
+- **Workflow Pipeline**:
+  1. Installs **Java 17 (Eclipse Temurin)** environment.
+  2. Sets up **Maven caching** for fast builds.
+  3. Executes `mvn verify` (compiles source, runs database tests via H2, validates formats).
+  4. Uploads test surefire execution reports as build artifacts on failure/success.
+
+See [.github/workflows/ci.yml](file:///S:/Dev/creatorOps/.github/workflows/ci.yml) for full pipeline specifications.
+
+---
+
 ## 📈 Project Status
 
 - [x] Documentation & Architecture Phase (Completed)
-- [ ] Backend Infrastructure Setup (Spring Boot, Security, PostgreSQL)
-- [ ] Database Schema Migrations (Flyway)
-- [ ] AI Integration Layer
-- [ ] Core REST APIs
+- [x] Backend Infrastructure Setup (Spring Boot, Security, PostgreSQL) (Completed)
+- [x] Database Schema Migrations (Flyway) (Completed)
+- [x] AI Integration Layer (Completed)
+- [x] Core REST APIs (Completed)
+- [x] Production Readiness (API Versioning, Correlation IDs, Actuator) (Completed)
+- [x] System Design Foundations (Domain Events, Async Processing, App Caching) (Completed)
+- [x] Engineering Maturity & Deployment Readiness (OpenAPI/Swagger, Docker, Profiles, CI) (Completed)
 - [ ] Frontend Workspace Initialization (Ember Octane + TypeScript)
 - [ ] Component & UI Shell Layout
 - [ ] Core Workspace Integrations
 - [ ] End-to-End Testing & Deployment
 
-For deployment guides and local development setup instructions, see the upcoming instructions in the wiki (coming soon).
+For a full step-by-step breakdown of setup operations, configurations, and database triggers, consult the **[Deployment Guide](file:///S:/Dev/creatorOps/docs/deployment.md)**.
+

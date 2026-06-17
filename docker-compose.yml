@@ -1,0 +1,79 @@
+# =========================================================================
+# CreatorOps Docker Compose — Local Full-Stack Environment
+# =========================================================================
+# Usage:
+#   cp .env.example .env       # Fill in your secrets
+#   docker compose up --build  # Start PostgreSQL + CreatorOps backend
+#   docker compose down        # Stop all services
+#   docker compose down -v     # Stop and remove all volumes (wipes DB)
+# =========================================================================
+
+services:
+
+  # -------------------------------------------------------------------------
+  # PostgreSQL Database
+  # -------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: creatorops-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-creatorops}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - creatorops-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-creatorops}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # -------------------------------------------------------------------------
+  # CreatorOps Spring Boot Application
+  # -------------------------------------------------------------------------
+  creatorops-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: creatorops-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_HOST: postgres
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-creatorops}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-900000}
+      JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS:-604800000}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AI_RATE_LIMIT_CAPACITY: ${AI_RATE_LIMIT_CAPACITY:-5}
+    ports:
+      - "8080:8080"
+    networks:
+      - creatorops-network
+
+# -------------------------------------------------------------------------
+# Volumes
+# -------------------------------------------------------------------------
+volumes:
+  pgdata:
+    name: creatorops-pgdata
+
+# -------------------------------------------------------------------------
+# Networks
+# -------------------------------------------------------------------------
+networks:
+  creatorops-network:
+    name: creatorops-network
+    driver: bridge

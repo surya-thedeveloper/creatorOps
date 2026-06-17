@@ -243,6 +243,23 @@ To prepare the modular monolith for high-throughput, observable production envir
 *   **Configurable Parameters**: Default capacity limits (e.g. 5 tokens refilled every minute) are declared in `application.yml` and can be overridden via system environment properties without recompiling code.
 *   **Rejection Response**: Requests exceeding the capacity limits are rejected immediately with HTTP `429 Too Many Requests` returning RFC 7807 structured JSON error payloads.
 
+### 6.6. API Discoverability & Documentation (OpenAPI/Swagger)
+*   **Springdoc-OpenAPI**: Interactive Swagger UI is exposed at `/swagger-ui/index.html` and raw spec JSON at `/v3/api-docs`.
+*   **Security Integration**: Fully supports JWT Bearer authentication within the Swagger UI for testing secured endpoints.
+*   **Production Safeguards**: Swagger UI is disabled in the `prod` profile to prevent exposing API surface details in production.
+
+### 6.7. Containerization & Isolation (Docker)
+*   **Multi-Stage Build**: Utilizes a lean Dockerfile containing a Maven compilation stage followed by an alpine JRE execution runtime stage (~200MB memory footprint).
+*   **Non-Root Execution**: Runs under a custom `creatorops` user (UID 1001) rather than root, minimizing the container's security attack surface.
+*   **Compose Orchestration**: Couples the app container with a PostgreSQL 16 health-checked database container under a private bridge network, ensuring zero host dependencies for local setup.
+
+### 6.8. Environment Configuration Standardization (Profiles)
+*   **Profile Division**: Segregates local development (`local` profile using PG with debug logging), containerized development (`postgres` profile inside Compose), staging (`dev` profile), and production (`prod` profile) properties.
+*   **Production Isolation**: Enforces production-only properties (strict secrets, actuator locks, Hikari pool sizing) without defaults to ensure deployment environments are properly configured and secure.
+
+### 6.9. Continuous Integration (GitHub Actions)
+*   **Automated Verification**: Runs on all pull requests and pushes to core branches, establishing an automated compilation, Flyway validation, and JUnit testing pipeline using Java 17.
+
 ---
 
 ## 7. Integration Architecture (Phase 2 & 3 Roadmap)

@@ -45,6 +45,9 @@ management:
     web:
       exposure:
         include: health, info, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
   info:
     env:
       enabled: true
@@ -62,9 +65,37 @@ info:
 creatorops:
   ai:
     rate-limit:
-      capacity: 5
+      capacity: ${AI_RATE_LIMIT_CAPACITY:5}
       refill-tokens: 5
       refill-duration-minutes: 1
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: gemini-1.5-flash
+
+# -------------------------------------------------------------------------
+# Security / JWT Configuration
+# Defaults are safe for local/test only — must be overridden in production.
+# -------------------------------------------------------------------------
+security:
+  jwt:
+    secret-key: ${JWT_SECRET:dGhpcy1pcy1hLXNlY3VyZS1hbmQtc3VmaWNpZW50bHktbG9uZy1zZWNyZXQta2V5LXRvLXVzZS1mb3Itand0LXNpZ25pbmc=}
+    expiration-ms: ${JWT_EXPIRATION_MS:900000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+
+# -------------------------------------------------------------------------
+# OpenAPI / Swagger Configuration
+# -------------------------------------------------------------------------
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
 
 ---
 

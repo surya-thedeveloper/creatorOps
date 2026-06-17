@@ -4,6 +4,10 @@ import com.creatorops.common.response.PagedResponse;
 import com.creatorops.script.dto.ScriptRequest;
 import com.creatorops.script.dto.ScriptResponse;
 import com.creatorops.script.service.ScriptService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,6 +35,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
+@Tag(name = "Scripts", description = "Manage script drafts and versions linked to content cards.")
+@SecurityRequirement(name = "bearerAuth")
 public class ScriptController {
 
     private final ScriptService scriptService;
@@ -41,6 +47,8 @@ public class ScriptController {
     }
 
     @PostMapping("/contents/{contentId}/scripts")
+    @Operation(summary = "Create script", description = "Creates a new script draft for the given content card.")
+    @ApiResponse(responseCode = "201", description = "Script created")
     public ResponseEntity<ScriptResponse> createScript(
             @PathVariable Long contentId,
             Authentication authentication,
@@ -50,6 +58,8 @@ public class ScriptController {
     }
 
     @GetMapping("/scripts/{id}")
+    @Operation(summary = "Get script by ID")
+    @ApiResponse(responseCode = "200", description = "Script returned")
     public ResponseEntity<ScriptResponse> getScriptById(
             @PathVariable Long id,
             Authentication authentication) {
@@ -58,6 +68,8 @@ public class ScriptController {
     }
 
     @GetMapping("/contents/{contentId}/scripts")
+    @Operation(summary = "List scripts for a content card")
+    @ApiResponse(responseCode = "200", description = "Scripts returned")
     public ResponseEntity<PagedResponse<ScriptResponse>> getScriptsByContent(
             @PathVariable Long contentId,
             Authentication authentication,
@@ -67,6 +79,8 @@ public class ScriptController {
     }
 
     @PutMapping("/scripts/{id}")
+    @Operation(summary = "Update script content or metadata")
+    @ApiResponse(responseCode = "200", description = "Script updated")
     public ResponseEntity<ScriptResponse> updateScript(
             @PathVariable Long id,
             @Valid @RequestBody ScriptRequest request,
@@ -76,6 +90,8 @@ public class ScriptController {
     }
 
     @DeleteMapping("/scripts/{id}")
+    @Operation(summary = "Delete script")
+    @ApiResponse(responseCode = "204", description = "Script deleted")
     public ResponseEntity<Void> deleteScript(
             @PathVariable Long id,
             Authentication authentication) {

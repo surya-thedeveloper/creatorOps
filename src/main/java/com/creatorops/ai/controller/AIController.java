@@ -3,6 +3,11 @@ package com.creatorops.ai.controller;
 import com.creatorops.ai.service.AIService;
 import com.creatorops.research.dto.ResearchItemResponse;
 import com.creatorops.script.dto.ScriptResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/ai")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
+@Tag(name = "AI", description = "AI-powered brainstorming and script generation. Rate-limited to 5 calls/minute per user. Requires GEMINI_API_KEY to be configured.")
+@SecurityRequirement(name = "bearerAuth")
 public class AIController {
 
     private final AIService aiService;
@@ -36,6 +43,16 @@ public class AIController {
      * Results are stored in the ResearchItem module.
      */
     @PostMapping("/contents/{contentId}/brainstorm")
+    @Operation(
+        summary = "Generate brainstorm ideas",
+        description = "Uses AI to generate click hooks, visual themes, audience questions, and structure outlines based on the content's research. Result is saved as an AI_BRAINSTORM research item."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Brainstorm generated and stored"),
+        @ApiResponse(responseCode = "404", description = "Content not found"),
+        @ApiResponse(responseCode = "429", description = "Rate limit exceeded (5 calls/min per user)"),
+        @ApiResponse(responseCode = "502", description = "AI provider error")
+    })
     public ResponseEntity<ResearchItemResponse> generateBrainstorm(
             @PathVariable Long contentId,
             Authentication authentication) {
@@ -48,6 +65,16 @@ public class AIController {
      * Generates a conversational script draft and versions it under the Script module.
      */
     @PostMapping("/contents/{contentId}/generate-script")
+    @Operation(
+        summary = "Generate script draft",
+        description = "Uses AI to draft a conversational script based on content metadata and research notes. Script is versioned and stored in the Script module."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Script generated and stored"),
+        @ApiResponse(responseCode = "404", description = "Content not found"),
+        @ApiResponse(responseCode = "429", description = "Rate limit exceeded (5 calls/min per user)"),
+        @ApiResponse(responseCode = "502", description = "AI provider error")
+    })
     public ResponseEntity<ScriptResponse> generateScript(
             @PathVariable Long contentId,
             Authentication authentication) {

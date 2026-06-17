@@ -2,6 +2,10 @@ package com.creatorops.analytics.controller;
 
 import com.creatorops.analytics.dto.*;
 import com.creatorops.analytics.service.AnalyticsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/analytics")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'CONTRIBUTOR')")
+@Tag(name = "Analytics", description = "Read-only operational dashboard metrics. All metrics are scoped to the caller's organization.")
+@SecurityRequirement(name = "bearerAuth")
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
@@ -45,6 +51,8 @@ public class AnalyticsController {
      * Returns operational summary metrics for the homepage.
      */
     @GetMapping("/dashboard")
+    @Operation(summary = "Dashboard summary", description = "Returns top-level KPIs: total content, assignments, tasks, and active brands.")
+    @ApiResponse(responseCode = "200", description = "Dashboard summary returned")
     public ResponseEntity<DashboardSummaryResponse> getDashboardSummary(Authentication authentication) {
         DashboardSummaryResponse response = analyticsService.getDashboardSummary(authentication.getName());
         return ResponseEntity.ok(response);
@@ -55,6 +63,8 @@ public class AnalyticsController {
      * Returns Content grouping counts (Stage, Type, Priority).
      */
     @GetMapping("/content")
+    @Operation(summary = "Content analytics", description = "Content breakdown by stage, type, and priority.")
+    @ApiResponse(responseCode = "200", description = "Content analytics returned")
     public ResponseEntity<ContentAnalyticsResponse> getContentAnalytics(Authentication authentication) {
         ContentAnalyticsResponse response = analyticsService.getContentAnalytics(authentication.getName());
         return ResponseEntity.ok(response);
@@ -65,6 +75,8 @@ public class AnalyticsController {
      * Returns Assignment grouping counts (Status, Type).
      */
     @GetMapping("/assignments")
+    @Operation(summary = "Assignment analytics", description = "Assignment breakdown by status.")
+    @ApiResponse(responseCode = "200", description = "Assignment analytics returned")
     public ResponseEntity<AssignmentAnalyticsResponse> getAssignmentAnalytics(Authentication authentication) {
         AssignmentAnalyticsResponse response = analyticsService.getAssignmentAnalytics(authentication.getName());
         return ResponseEntity.ok(response);
@@ -75,6 +87,8 @@ public class AnalyticsController {
      * Returns Task grouping counts (Status, Priority) and overdue tasks.
      */
     @GetMapping("/tasks")
+    @Operation(summary = "Task analytics", description = "Task breakdown by status and priority. Includes overdue task count.")
+    @ApiResponse(responseCode = "200", description = "Task analytics returned")
     public ResponseEntity<TaskAnalyticsResponse> getTaskAnalytics(Authentication authentication) {
         TaskAnalyticsResponse response = analyticsService.getTaskAnalytics(authentication.getName());
         return ResponseEntity.ok(response);
@@ -85,6 +99,8 @@ public class AnalyticsController {
      * Returns temporal publishing pipeline metrics.
      */
     @GetMapping("/publishing")
+    @Operation(summary = "Publishing analytics", description = "Publishing pipeline metrics: this week, this month, overdue.")
+    @ApiResponse(responseCode = "200", description = "Publishing analytics returned")
     public ResponseEntity<PublishingAnalyticsResponse> getPublishingAnalytics(Authentication authentication) {
         PublishingAnalyticsResponse response = analyticsService.getPublishingAnalytics(authentication.getName());
         return ResponseEntity.ok(response);
