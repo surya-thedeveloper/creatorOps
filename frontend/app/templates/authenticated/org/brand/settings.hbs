@@ -1,0 +1,58 @@
+<div class="max-w-2xl bg-card border border-border rounded-xl p-8 shadow-sm">
+  <div class="mb-6 border-b border-border pb-4">
+    <h2 class="text-xl font-bold text-text">Brand Settings</h2>
+    <p class="text-xs text-text-secondary mt-1">Configure profile details, description, and visual assets for this content brand.</p>
+  </div>
+
+  <form class="space-y-6" {{on "submit" this.saveBrand}}>
+    <div class="space-y-4">
+      <div>
+        <label for="brand-name" class="block text-xs font-semibold text-text uppercase tracking-wider">Brand Name</label>
+        <input
+          id="brand-name"
+          type="text"
+          required
+          class="mt-1.5 block w-full px-4 py-2.5 border border-border rounded-lg text-xs bg-background text-text focus:ring-1 focus:ring-primary outline-none transition-all"
+          value={{this.model.name}}
+          {{on "input" (pick "target.value" (mut this.model.name))}}
+        />
+      </div>
+
+      <div>
+        <label for="brand-desc" class="block text-xs font-semibold text-text uppercase tracking-wider">Description</label>
+        <textarea
+          id="brand-desc"
+          rows="4"
+          class="mt-1.5 block w-full px-4 py-2.5 border border-border rounded-lg text-xs bg-background text-text focus:ring-1 focus:ring-primary outline-none transition-all"
+          value={{this.model.description}}
+          {{on "input" (pick "target.value" (mut this.model.description))}}
+        ></textarea>
+      </div>
+
+      <div>
+        <label for="brand-logo" class="block text-xs font-semibold text-text uppercase tracking-wider">Logo Image URL</label>
+        <input
+          id="brand-logo"
+          type="url"
+          class="mt-1.5 block w-full px-4 py-2.5 border border-border rounded-lg text-xs bg-background text-text focus:ring-1 focus:ring-primary outline-none transition-all"
+          value={{this.model.logoUrl}}
+          {{on "input" (pick "target.value" (mut this.model.logoUrl))}}
+        />
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-border flex items-center justify-end">
+      <button
+        type="submit"
+        disabled={{this.isSaving}}
+        class="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
+      >
+        {{#if this.isSaving}}
+          Saving...
+        {{else}}
+          Save Configuration
+        {{/if}}
+      </button>
+    </div>
+  </form>
+</div>

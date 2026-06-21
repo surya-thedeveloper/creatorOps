@@ -1,0 +1,68 @@
+<div class="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8 bg-card p-10 rounded-2xl shadow-xl border border-border">
+    <div class="text-center">
+      <h2 class="text-3xl font-extrabold text-text tracking-tight">Set up your Organization</h2>
+      <p class="mt-2 text-sm text-text-secondary">
+        Create a tenant workspace for your content teams.
+      </p>
+    </div>
+
+    {{#if this.errorMessage}}
+      <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-start gap-2">
+        <svg class="h-5 w-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>{{this.errorMessage}}</span>
+      </div>
+    {{/if}}
+
+    <form class="space-y-6" {{on "submit" this.createOrg}}>
+      <div class="space-y-4">
+        <div>
+          <label for="org-name" class="block text-sm font-medium text-text">Organization name</label>
+          <input
+            id="org-name"
+            name="name"
+            type="text"
+            required
+            class="mt-1 block w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-primary text-text bg-background sm:text-sm transition-all"
+            placeholder="e.g. SLAY Media"
+            value={{this.name}}
+            {{on "input" (pick "target.value" (mut this.name))}}
+          />
+        </div>
+
+        <div>
+          <label for="logo-url" class="block text-sm font-medium text-text">Logo URL (Optional)</label>
+          <input
+            id="logo-url"
+            name="logoUrl"
+            type="url"
+            class="mt-1 block w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-primary text-text bg-background sm:text-sm transition-all"
+            placeholder="https://example.com/logo.png"
+            value={{this.logoUrl}}
+            {{on "input" (pick "target.value" (mut this.logoUrl))}}
+          />
+        </div>
+      </div>
+
+      <div>
+        <button
+          type="submit"
+          disabled={{this.isLoading}}
+          class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 transition-colors cursor-pointer"
+        >
+          {{#if this.isLoading}}
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            Creating organization...
+          {{else}}
+            Continue
+          {{/if}}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

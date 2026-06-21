@@ -1,0 +1,52 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-text">Team Members</h2>
+      <p class="text-sm text-text-secondary mt-1">Manage users, invitations, and access roles inside this workspace.</p>
+    </div>
+    
+    <button
+      type="button"
+      class="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
+    >
+      Invite Member
+    </button>
+  </div>
+
+  <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-gray-50/50">
+      <span class="text-xs font-bold text-text-secondary uppercase">User profile</span>
+      <span class="text-xs font-bold text-text-secondary uppercase">Email address</span>
+      <span class="text-xs font-bold text-text-secondary uppercase">Role permission</span>
+    </div>
+
+    <div class="divide-y divide-border">
+      {{#each this.model as |user|}}
+        <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 items-center gap-4 hover:bg-gray-50/40 transition-colors">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+              {{first-char user.fullName}}
+            </div>
+            <span class="font-bold text-sm text-text">{{user.fullName}}</span>
+          </div>
+
+          <span class="text-sm text-text-secondary">{{user.email}}</span>
+
+          <div>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase
+              {{if (eq user.role 'ADMIN') 'bg-purple-150 text-purple-800 bg-purple-50'}}
+              {{if (eq user.role 'MANAGER') 'bg-blue-150 text-blue-800 bg-blue-50'}}
+              {{if (eq user.role 'CONTRIBUTOR') 'bg-emerald-150 text-emerald-800 bg-emerald-50'}}"
+            >
+              {{user.role}}
+            </span>
+          </div>
+        </div>
+      {{else}}
+        <div class="p-12 text-center text-xs text-text-secondary border border-dashed border-border rounded-xl">
+          No team members found.
+        </div>
+      {{/each}}
+    </div>
+  </div>
+</div>
