@@ -1,63 +1,171 @@
+{{! UX-01: Analytics template now renders live data from the backend analytics endpoints }}
 <div class="space-y-6">
   <div>
     <h2 class="text-2xl font-bold text-text">Workspace Analytics</h2>
-    <p class="text-sm text-text-secondary mt-1">Operational summaries, content breakdown, and pipeline status logs.</p>
+    <p class="text-sm text-text-secondary mt-1">Operational summaries, content
+      breakdown, and pipeline status logs.</p>
+  </div>
+
+  {{! KPI Summary Row }}
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+      <span
+        class="text-xs font-semibold text-text-secondary tracking-wider uppercase block"
+      >Total Content</span>
+      <span
+        class="text-3xl font-extrabold text-text mt-2 block"
+      >{{this.model.content.totalContent}}</span>
+    </div>
+    <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+      <span
+        class="text-xs font-semibold text-text-secondary tracking-wider uppercase block"
+      >Published</span>
+      <span
+        class="text-3xl font-extrabold text-emerald-600 mt-2 block"
+      >{{this.model.content.publishedContent}}</span>
+    </div>
+    <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+      <span
+        class="text-xs font-semibold text-text-secondary tracking-wider uppercase block"
+      >Active Assignments</span>
+      <span
+        class="text-3xl font-extrabold text-indigo-600 mt-2 block"
+      >{{this.model.assignments.activeAssignments}}</span>
+    </div>
+    <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+      <span
+        class="text-xs font-semibold text-text-secondary tracking-wider uppercase block"
+      >Tasks Done</span>
+      <span class="text-3xl font-extrabold text-text mt-2 block">
+        {{this.model.tasks.completedTasks}}
+        <span class="text-lg font-normal text-text-secondary">/
+          {{this.model.tasks.totalTasks}}</span>
+      </span>
+    </div>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Content Breakdown Card -->
+    {{! Content Stage Breakdown }}
     <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
-      <h3 class="font-bold text-text text-sm mb-4">Content Formats</h3>
+      <h3 class="font-bold text-text text-sm mb-4">Content by Stage</h3>
       <div class="space-y-3">
-        <!-- Progress representation of formats -->
-        <div>
-          <div class="flex justify-between text-xs font-semibold text-text-secondary mb-1">
-            <span>YouTube Videos</span>
-            <span>Active</span>
-          </div>
-          <div class="w-full bg-gray-150 h-2 bg-gray-200 rounded-full">
-            <div class="bg-red-500 h-2 rounded-full" style="width: 65%"></div>
-          </div>
-        </div>
+        {{#if this.model.content.stageBreakdown}}
+          {{#each-in this.model.content.stageBreakdown as |stage count|}}
+            <div>
+              <div
+                class="flex justify-between text-xs font-semibold text-text-secondary mb-1"
+              >
+                <span>{{stage}}</span>
+                <span class="text-text font-bold">{{count}}</span>
+              </div>
+              <div class="w-full h-2 bg-gray-100 rounded-full">
+                <div
+                  class="bg-primary h-2 rounded-full transition-all"
+                  style="width: 40%"
+                ></div>
+              </div>
+            </div>
+          {{/each-in}}
+        {{else}}
+          <p class="text-xs text-text-secondary italic">No content stage data
+            available.</p>
+        {{/if}}
+      </div>
+    </div>
 
-        <div>
-          <div class="flex justify-between text-xs font-semibold text-text-secondary mb-1">
-            <span>Shorts & Reels</span>
-            <span>Active</span>
-          </div>
-          <div class="w-full bg-gray-150 h-2 bg-gray-200 rounded-full">
-            <div class="bg-pink-500 h-2 rounded-full" style="width: 45%"></div>
-          </div>
+    {{! Publishing Pipeline Status }}
+    <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <h3 class="font-bold text-text text-sm mb-4">Pipeline Scheduling</h3>
+      <div class="space-y-4">
+        <div
+          class="flex items-center justify-between p-3 border border-border bg-gray-50 rounded-lg"
+        >
+          <span class="text-xs text-text font-medium">Scheduled</span>
+          <span
+            class="text-sm font-bold text-indigo-600"
+          >{{this.model.publishing.scheduledCount}}</span>
         </div>
-
-        <div>
-          <div class="flex justify-between text-xs font-semibold text-text-secondary mb-1">
-            <span>Blogs / Articles</span>
-            <span>Active</span>
-          </div>
-          <div class="w-full bg-gray-150 h-2 bg-gray-200 rounded-full">
-            <div class="bg-blue-500 h-2 rounded-full" style="width: 30%"></div>
-          </div>
+        <div
+          class="flex items-center justify-between p-3 border border-border bg-gray-50 rounded-lg"
+        >
+          <span class="text-xs text-text font-medium">Published This Month</span>
+          <span
+            class="text-sm font-bold text-emerald-600"
+          >{{this.model.publishing.publishedThisMonth}}</span>
+        </div>
+        <div
+          class="flex items-center justify-between p-3 border border-border bg-gray-50 rounded-lg"
+        >
+          <span class="text-xs text-text font-medium">Overdue</span>
+          <span
+            class="text-sm font-bold text-red-600"
+          >{{this.model.publishing.overdueCount}}</span>
         </div>
       </div>
     </div>
 
-    <!-- Publishing Schedule Status Card -->
+    {{! Assignment Type Breakdown }}
     <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
-      <h3 class="font-bold text-text text-sm mb-4">Pipeline Scheduling</h3>
-      <div class="space-y-4">
-        <div class="flex items-center justify-between p-3 border border-border bg-gray-50 rounded-lg">
-          <span class="text-xs text-text font-medium">Releasing this Week</span>
-          <span class="text-sm font-bold text-indigo-600">3 items</span>
+      <h3 class="font-bold text-text text-sm mb-4">Assignments Overview</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-text-secondary text-xs font-medium">Total
+            Assignments</span>
+          <span
+            class="font-bold text-text text-xs"
+          >{{this.model.assignments.totalAssignments}}</span>
         </div>
-        <div class="flex items-center justify-between p-3 border border-border bg-gray-50 rounded-lg">
-          <span class="text-xs text-text font-medium">Releasing this Month</span>
-          <span class="text-sm font-bold text-emerald-600">8 items</span>
+        <div class="flex justify-between text-sm">
+          <span class="text-text-secondary text-xs font-medium">Active</span>
+          <span
+            class="font-bold text-blue-600 text-xs"
+          >{{this.model.assignments.activeAssignments}}</span>
         </div>
-        <div class="flex items-center justify-between p-3 border border-border bg-gray-50 rounded-lg">
-          <span class="text-xs text-text font-medium">Overdue Release Dates</span>
-          <span class="text-sm font-bold text-red-600">1 item</span>
+        <div class="flex justify-between text-sm">
+          <span class="text-text-secondary text-xs font-medium">Completed</span>
+          <span
+            class="font-bold text-emerald-600 text-xs"
+          >{{this.model.assignments.completedAssignments}}</span>
         </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-text-secondary text-xs font-medium">Overdue</span>
+          <span
+            class="font-bold text-red-600 text-xs"
+          >{{this.model.assignments.overdueAssignments}}</span>
+        </div>
+      </div>
+    </div>
+
+    {{! Task Completion }}
+    <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <h3 class="font-bold text-text text-sm mb-4">Checklist Tasks</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-text-secondary text-xs font-medium">Total Tasks</span>
+          <span
+            class="font-bold text-text text-xs"
+          >{{this.model.tasks.totalTasks}}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-text-secondary text-xs font-medium">Completed</span>
+          <span
+            class="font-bold text-emerald-600 text-xs"
+          >{{this.model.tasks.completedTasks}}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-text-secondary text-xs font-medium">Pending</span>
+          <span
+            class="font-bold text-indigo-600 text-xs"
+          >{{this.model.tasks.pendingTasks}}</span>
+        </div>
+        {{#if this.model.tasks.overdueTasks}}
+          <div class="flex justify-between text-sm">
+            <span class="text-text-secondary text-xs font-medium">Overdue</span>
+            <span
+              class="font-bold text-red-600 text-xs"
+            >{{this.model.tasks.overdueTasks}}</span>
+          </div>
+        {{/if}}
       </div>
     </div>
   </div>

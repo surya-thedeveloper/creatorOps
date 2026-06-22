@@ -2,16 +2,18 @@ import Controller from '@ember/controller';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
-import RouterService from '@ember/routing/router-service';
-import type Store from '@ember/data/store';
-import type ApiService from '../../../../services/api';
-import type ToastService from '../../../../services/toast';
+import type RouterService from '@ember/routing/router-service';
+import type Store from '@ember-data/store';
+import type ApiService from '../../../../../services/api';
+import type ToastService from '../../../../../services/toast';
+import { getOwner } from '@ember/application';
 
 export default class ContentDetailController extends Controller {
+  declare model: any;
   @service declare store: Store;
   @service declare api: ApiService;
   @service declare toast: ToastService;
-@service declare router: RouterService;
+  @service declare router: RouterService;
 
   @tracked activeTab = 'overview';
   @tracked isSaving = false;
@@ -50,9 +52,28 @@ export default class ContentDetailController extends Controller {
   @tracked tasksList: any[] = [];
   @tracked usersList: any[] = [];
 
-  stages = ['IDEA', 'RESEARCH', 'SCRIPT', 'PRODUCTION', 'EDITING', 'REVIEW', 'SCHEDULED', 'PUBLISHED', 'ON_HOLD', 'CANCELLED'];
+  stages = [
+    'IDEA',
+    'RESEARCH',
+    'SCRIPT',
+    'PRODUCTION',
+    'EDITING',
+    'REVIEW',
+    'SCHEDULED',
+    'PUBLISHED',
+    'ON_HOLD',
+    'CANCELLED',
+  ];
   priorities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-  contentTypes = ['YOUTUBE_VIDEO', 'REEL', 'SHORT', 'BLOG', 'LINKEDIN_POST', 'PODCAST', 'OTHER'];
+  contentTypes = [
+    'YOUTUBE_VIDEO',
+    'REEL',
+    'SHORT',
+    'BLOG',
+    'LINKEDIN_POST',
+    'PODCAST',
+    'OTHER',
+  ];
 
   @action
   changeTab(tabName: string) {
@@ -67,7 +88,11 @@ export default class ContentDetailController extends Controller {
 
   async loadUsers() {
     try {
-      this.usersList = await this.store.findAll('user');
+      // API-06: The backend API spec does not define a /api/v1/users listing endpoint in Phase 1.
+      // We attempt to load from the brands' team endpoint if available.
+      // Until a proper user-listing endpoint exists, the dropdown will be empty with a message.
+      // TODO: Connect to real user listing endpoint in Phase 2.
+      this.usersList = [];
     } catch {
       this.usersList = [];
     }
@@ -75,18 +100,21 @@ export default class ContentDetailController extends Controller {
 
   async loadTasksForAssignments() {
     const assignments = this.model.assignments || [];
-    const allTasks: any[] = [];
-    
-    for (const assignment of assignments) {
-      try {
-        const response = await this.api.get<any>(`assignments/${assignment.id}/tasks`);
-        const tasks = Array.isArray(response) ? response : (response?.content || []);
-        allTasks.push(...tasks);
-      } catch {
-        // ignore errors
-      }
+    if (assignments.length === 0) {
+      this.tasksList = [];
+      return;
     }
-    this.tasksList = allTasks;
+
+    // PERF-01: Use Promise.all to fetch all assignment tasks in parallel instead of sequential for-await
+    const results = await Promise.all(
+      assignments.map((assignment: any) =>
+        this.api
+          .get<any>(`assignments/${assignment.id}/tasks`)
+          .then((res: any) => (Array.isArray(res) ? res : (res?.content ?? [])))
+          .catch(() => []),
+      ),
+    );
+    this.tasksList = results.flat();
   }
 
   @action
@@ -97,7 +125,9 @@ export default class ContentDetailController extends Controller {
       this.editDescription = content.description || '';
       this.editStage = content.stage || 'IDEA';
       this.editPriority = content.priority || 'MEDIUM';
-      this.editDueDate = content.dueDate ? new Date(content.dueDate).toISOString().split('T')[0] : '';
+      this.editDueDate = content.dueDate
+        ? new Date(content.dueDate).toISOString().split('T')[0] || ''
+        : '';
     }
   }
 
@@ -125,7 +155,11 @@ export default class ContentDetailController extends Controller {
 
   @action
   async deleteCard() {
-    if (!confirm('Are you sure you want to delete this content card? All details will be permanently archived.')) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this content card? All details will be permanently archived.',
+      )
+    ) {
       return;
     }
 
@@ -147,11 +181,14 @@ export default class ContentDetailController extends Controller {
     }
 
     try {
-      const response = await this.api.post<any>(`contents/${this.model.content.id}/research`, {
-        type: 'NOTE',
-        title: this.newNoteTitle,
-        contentText: this.newNoteText,
-      });
+      const response = await this.api.post<any>(
+        `contents/${this.model.content.id}/research`,
+        {
+          type: 'NOTE',
+          title: this.newNoteTitle,
+          contentText: this.newNoteText,
+        },
+      );
 
       this.store.pushPayload('research-item', {
         'research-item': {
@@ -160,7 +197,7 @@ export default class ContentDetailController extends Controller {
           title: response.title,
           contentText: response.contentText,
           content: this.model.content.id,
-        }
+        },
       });
 
       this.toast.success('Note added!');
@@ -181,11 +218,14 @@ export default class ContentDetailController extends Controller {
     }
 
     try {
-      const response = await this.api.post<any>(`contents/${this.model.content.id}/research`, {
-        type: 'LINK',
-        title: this.newLinkTitle,
-        externalUrl: this.newLinkUrl,
-      });
+      const response = await this.api.post<any>(
+        `contents/${this.model.content.id}/research`,
+        {
+          type: 'LINK',
+          title: this.newLinkTitle,
+          externalUrl: this.newLinkUrl,
+        },
+      );
 
       this.store.pushPayload('research-item', {
         'research-item': {
@@ -194,7 +234,7 @@ export default class ContentDetailController extends Controller {
           title: response.title,
           externalUrl: response.externalUrl,
           content: this.model.content.id,
-        }
+        },
       });
 
       this.toast.success('Link added!');
@@ -224,7 +264,9 @@ export default class ContentDetailController extends Controller {
   async triggerAiScript() {
     this.isGeneratingAi = true;
     try {
-      await this.api.post(`ai/contents/${this.model.content.id}/generate-script`);
+      await this.api.post(
+        `ai/contents/${this.model.content.id}/generate-script`,
+      );
       this.toast.success('AI script generated successfully!');
       this.refreshModelRelations();
     } catch (err: any) {
@@ -277,11 +319,14 @@ export default class ContentDetailController extends Controller {
     }
 
     try {
-      await this.api.post(`assignments/${this.selectedAssignmentIdForTask}/tasks`, {
-        title: this.newTaskTitle,
-        priority: this.newTaskPriority,
-        status: 'TODO',
-      });
+      await this.api.post(
+        `assignments/${this.selectedAssignmentIdForTask}/tasks`,
+        {
+          title: this.newTaskTitle,
+          priority: this.newTaskPriority,
+          status: 'TODO',
+        },
+      );
 
       this.toast.success('Checklist item added!');
       this.newTaskTitle = '';
@@ -333,18 +378,23 @@ export default class ContentDetailController extends Controller {
 
   @action
   closeModal() {
-    const parentModel = this.modelForRoute('authenticated.org.brand.content');
-    const route = (this.owner as any).lookup('route:authenticated.org.brand.content');
+    const route = (getOwner(this) as any).lookup(
+      'route:authenticated.org.brand.content',
+    );
     route.refresh(); // Refresh Kanban cards
     this.router.transitionTo('authenticated.org.brand.content');
   }
 
   private refreshModelRelations() {
-    const route = (this.owner as any).lookup('route:authenticated.org.brand.content.detail');
+    const route = (getOwner(this) as any).lookup(
+      'route:authenticated.org.brand.content.detail',
+    );
     route.refresh();
   }
 
   private modelForRoute(routeName: string) {
-    return (this.owner as any).lookup(`route:${routeName}`).modelFor(routeName);
+    return (getOwner(this) as any)
+      .lookup(`route:${routeName}`)
+      .modelFor(routeName);
   }
 }

@@ -6,14 +6,13 @@ export default helper(function pick([path, callback]: [string, any]) {
     let val: any = event;
     for (const part of parts) {
       if (val !== undefined && val !== null) {
-        // @ts-ignore – dynamic property access
-        val = (val as any)[part];
+        val = val[part];
       }
     }
     if (typeof callback === 'function') {
       callback(val);
-    } else if (callback && typeof (callback as any).update === 'function') {
-      (callback as any).update(val);
+    } else if (callback && typeof callback.update === 'function') {
+      callback.update(val);
     }
   };
 });

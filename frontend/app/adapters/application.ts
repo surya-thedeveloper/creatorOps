@@ -11,7 +11,7 @@ export default class ApplicationAdapter extends RESTAdapter {
   get headers() {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'X-Correlation-Id': crypto.randomUUID(),
     };
 

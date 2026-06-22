@@ -1,12 +1,24 @@
 <div class="h-full flex flex-col space-y-6">
-  <!-- Top Filter / Control Bar -->
-  <div class="bg-card border border-border p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+  {{! Top Filter / Control Bar }}
+  <div
+    class="bg-card border border-border p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+  >
     <div class="flex flex-wrap items-center gap-3">
-      <!-- Search input -->
+      {{! Search input }}
       <div class="relative w-64">
         <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-          <svg class="h-4 w-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          <svg
+            class="h-4 w-4 text-text-secondary"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
         </span>
         <input
@@ -18,7 +30,7 @@
         />
       </div>
 
-      <!-- Type Filter -->
+      {{! Type Filter }}
       <select
         class="px-3 py-2 border border-border rounded-lg text-xs bg-gray-50 outline-none focus:ring-1 focus:ring-primary focus:bg-white transition-all"
         value={{this.filterType}}
@@ -30,7 +42,7 @@
         {{/each}}
       </select>
 
-      <!-- Priority Filter -->
+      {{! Priority Filter }}
       <select
         class="px-3 py-2 border border-border rounded-lg text-xs bg-gray-50 outline-none focus:ring-1 focus:ring-primary focus:bg-white transition-all"
         value={{this.filterPriority}}
@@ -43,60 +55,104 @@
       </select>
     </div>
 
-    <!-- Create Card Trigger -->
+    {{! Create Card Trigger }}
     <button
       type="button"
       class="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer flex items-center gap-1.5 self-start md:self-auto"
       {{on "click" this.openCreateModal}}
     >
-      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      <svg
+        class="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 4v16m8-8H4"
+        />
       </svg>
       Create Card
     </button>
   </div>
 
-  <!-- Kanban Columns Grid -->
+  {{! Kanban Columns Grid }}
   <div class="flex-grow overflow-x-auto flex gap-4 pb-4 select-none">
     {{#each this.stages as |stage|}}
-      <div class="w-80 flex-shrink-0 flex flex-col bg-gray-100/50 rounded-xl border border-border/60 p-4">
-        <!-- Stage Title -->
+      <div
+        class="w-80 flex-shrink-0 flex flex-col bg-gray-100/50 rounded-xl border border-border/60 p-4"
+      >
+        {{! Stage Title }}
         <div class="flex items-center justify-between mb-4">
-          <span class="text-xs font-bold text-text uppercase tracking-wider">{{stage}}</span>
-          <span class="text-xs bg-gray-200 text-text-secondary px-2 py-0.5 rounded-full font-medium">
+          <span
+            class="text-xs font-bold text-text uppercase tracking-wider"
+          >{{stage}}</span>
+          <span
+            class="text-xs bg-gray-200 text-text-secondary px-2 py-0.5 rounded-full font-medium"
+          >
             {{get (get this.contentsByStage stage) "length"}}
           </span>
         </div>
 
-        <!-- Cards List -->
+        {{! Cards List }}
         <div class="flex-grow overflow-y-auto space-y-3 pr-1">
           {{#each (get this.contentsByStage stage) as |card|}}
-            <div class="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow transition-shadow relative group">
-              <!-- Type Indicator -->
+            <div
+              class="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow transition-shadow relative group"
+            >
+              {{! Type Indicator }}
               <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md uppercase
-                  {{if (eq card.type 'YOUTUBE_VIDEO') 'bg-red-50 text-red-700 border border-red-200'}}
-                  {{if (eq card.type 'REEL') 'bg-pink-50 text-pink-700 border border-pink-200'}}
-                  {{if (eq card.type 'SHORT') 'bg-purple-50 text-purple-700 border border-purple-200'}}
-                  {{if (eq card.type 'BLOG') 'bg-blue-50 text-blue-700 border border-blue-200'}}
-                  {{if (eq card.type 'LINKEDIN_POST') 'bg-indigo-50 text-indigo-700 border border-indigo-200'}}
-                  {{if (eq card.type 'PODCAST') 'bg-emerald-50 text-emerald-700 border border-emerald-200'}}
-                  {{if (eq card.type 'OTHER') 'bg-gray-50 text-gray-700 border border-gray-200'}}"
+                <span
+                  class="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-md uppercase
+                    {{if
+                      (eq card.type 'YOUTUBE_VIDEO')
+                      'bg-red-50 text-red-700 border border-red-200'
+                    }}
+                    {{if
+                      (eq card.type 'REEL')
+                      'bg-pink-50 text-pink-700 border border-pink-200'
+                    }}
+                    {{if
+                      (eq card.type 'SHORT')
+                      'bg-purple-50 text-purple-700 border border-purple-200'
+                    }}
+                    {{if
+                      (eq card.type 'BLOG')
+                      'bg-blue-50 text-blue-700 border border-blue-200'
+                    }}
+                    {{if
+                      (eq card.type 'LINKEDIN_POST')
+                      'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                    }}
+                    {{if
+                      (eq card.type 'PODCAST')
+                      'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }}
+                    {{if
+                      (eq card.type 'OTHER')
+                      'bg-gray-50 text-gray-700 border border-gray-200'
+                    }}"
                 >
                   {{card.type}}
                 </span>
 
-                <span class="text-[10px] font-bold uppercase tracking-wider
-                  {{if (eq card.priority 'LOW') 'text-gray-500'}}
-                  {{if (eq card.priority 'MEDIUM') 'text-blue-500'}}
-                  {{if (eq card.priority 'HIGH') 'text-orange-500'}}
-                  {{if (eq card.priority 'CRITICAL') 'text-red-600 font-extrabold'}}"
+                <span
+                  class="text-[10px] font-bold uppercase tracking-wider
+                    {{if (eq card.priority 'LOW') 'text-gray-500'}}
+                    {{if (eq card.priority 'MEDIUM') 'text-blue-500'}}
+                    {{if (eq card.priority 'HIGH') 'text-orange-500'}}
+                    {{if
+                      (eq card.priority 'CRITICAL')
+                      'text-red-600 font-extrabold'
+                    }}"
                 >
                   {{card.priority}}
                 </span>
               </div>
 
-              <!-- Title -->
+              {{! Title }}
               <LinkTo
                 @route="authenticated.org.brand.content.detail"
                 @model={{card.id}}
@@ -105,33 +161,49 @@
                 {{card.title}}
               </LinkTo>
 
-              <!-- Card Info Footer -->
+              {{! Card Info Footer }}
               <div class="mt-4 flex items-center justify-between">
-                <!-- Due Date -->
-                <span class="text-[10px] text-text-secondary flex items-center gap-1">
+                {{! Due Date }}
+                <span
+                  class="text-[10px] text-text-secondary flex items-center gap-1"
+                >
                   {{#if card.dueDate}}
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    <svg
+                      class="h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
-                    {{card.dueDate}}
+                    {{format-date card.dueDate format="short"}}
                   {{/if}}
                 </span>
 
-                <!-- Quick Stage Move Controls -->
-                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {{! Quick Stage Move Controls }}
+                <div
+                  class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
                   <button
                     type="button"
                     class="h-5 w-5 bg-gray-50 border border-border rounded flex items-center justify-center text-text-secondary hover:bg-white hover:text-text cursor-pointer"
+                    aria-label="Move to previous stage"
                     title="Move back"
-                    {{on "click" (fn this.moveCard card 'prev')}}
+                    {{on "click" (fn this.moveCard card "prev")}}
                   >
                     ‹
                   </button>
                   <button
                     type="button"
                     class="h-5 w-5 bg-gray-50 border border-border rounded flex items-center justify-center text-text-secondary hover:bg-white hover:text-text cursor-pointer"
+                    aria-label="Move to next stage"
                     title="Move next"
-                    {{on "click" (fn this.moveCard card 'next')}}
+                    {{on "click" (fn this.moveCard card "next")}}
                   >
                     ›
                   </button>
@@ -139,7 +211,9 @@
               </div>
             </div>
           {{else}}
-            <div class="py-12 text-center text-xs text-text-secondary border border-dashed border-border rounded-xl">
+            <div
+              class="py-12 text-center text-xs text-text-secondary border border-dashed border-border rounded-xl"
+            >
               Empty
             </div>
           {{/each}}
@@ -148,11 +222,17 @@
     {{/each}}
   </div>
 
-  <!-- Create Content Modal Overlay -->
+  {{! Create Content Modal Overlay }}
   {{#if this.isCreating}}
-    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-        <div class="px-6 py-5 border-b border-border flex items-center justify-between">
+    <div
+      class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+      >
+        <div
+          class="px-6 py-5 border-b border-border flex items-center justify-between"
+        >
           <h3 class="font-bold text-text text-base">Create Content Card</h3>
           <button
             type="button"
@@ -165,7 +245,10 @@
 
         <form class="p-6 space-y-4" {{on "submit" this.createContent}}>
           <div>
-            <label for="new-title" class="block text-xs font-semibold text-text uppercase tracking-wider">Title</label>
+            <label
+              for="new-title"
+              class="block text-xs font-semibold text-text uppercase tracking-wider"
+            >Title</label>
             <input
               id="new-title"
               type="text"
@@ -179,7 +262,10 @@
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="new-type" class="block text-xs font-semibold text-text uppercase tracking-wider">Format Type</label>
+              <label
+                for="new-type"
+                class="block text-xs font-semibold text-text uppercase tracking-wider"
+              >Format Type</label>
               <select
                 id="new-type"
                 class="mt-1.5 block w-full px-3 py-2 border border-border rounded-lg text-xs bg-background text-text focus:ring-1 focus:ring-primary outline-none transition-all"
@@ -193,7 +279,10 @@
             </div>
 
             <div>
-              <label for="new-priority" class="block text-xs font-semibold text-text uppercase tracking-wider">Urgency</label>
+              <label
+                for="new-priority"
+                class="block text-xs font-semibold text-text uppercase tracking-wider"
+              >Urgency</label>
               <select
                 id="new-priority"
                 class="mt-1.5 block w-full px-3 py-2 border border-border rounded-lg text-xs bg-background text-text focus:ring-1 focus:ring-primary outline-none transition-all"
@@ -208,7 +297,10 @@
           </div>
 
           <div>
-            <label for="new-due-date" class="block text-xs font-semibold text-text uppercase tracking-wider">Due Date (Optional)</label>
+            <label
+              for="new-due-date"
+              class="block text-xs font-semibold text-text uppercase tracking-wider"
+            >Due Date (Optional)</label>
             <input
               id="new-due-date"
               type="date"
@@ -219,7 +311,10 @@
           </div>
 
           <div>
-            <label for="new-desc" class="block text-xs font-semibold text-text uppercase tracking-wider">Description (Optional)</label>
+            <label
+              for="new-desc"
+              class="block text-xs font-semibold text-text uppercase tracking-wider"
+            >Description (Optional)</label>
             <textarea
               id="new-desc"
               rows="3"
@@ -230,7 +325,9 @@
             ></textarea>
           </div>
 
-          <div class="pt-4 flex items-center justify-end gap-3 border-t border-border mt-6">
+          <div
+            class="pt-4 flex items-center justify-end gap-3 border-t border-border mt-6"
+          >
             <button
               type="button"
               class="px-4 py-2 border border-border rounded-lg text-xs font-semibold text-text-secondary hover:bg-gray-50 cursor-pointer transition-colors"
@@ -250,6 +347,6 @@
     </div>
   {{/if}}
 
-  <!-- Outlet overlay for detail tabs modal -->
+  {{! Outlet overlay for detail tabs modal }}
   {{outlet}}
 </div>

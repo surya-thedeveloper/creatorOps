@@ -1,16 +1,34 @@
-<div class="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
-  <div class="max-w-md w-full space-y-8 bg-card p-10 rounded-2xl shadow-xl border border-border">
+<div
+  class="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 lg:px-8"
+>
+  <div
+    class="max-w-md w-full space-y-8 bg-card p-10 rounded-2xl shadow-xl border border-border"
+  >
     <div class="text-center">
-      <h2 class="text-3xl font-extrabold text-text tracking-tight">Create your first Brand</h2>
+      <h2 class="text-3xl font-extrabold text-text tracking-tight">Create your
+        first Brand</h2>
       <p class="mt-2 text-sm text-text-secondary">
-        Add a content channel (e.g. YouTube channel, podcast, or blog) to start organizing.
+        Add a content channel (e.g. YouTube channel, podcast, or blog) to start
+        organizing.
       </p>
     </div>
 
     {{#if this.errorMessage}}
-      <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-start gap-2">
-        <svg class="h-5 w-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      <div
+        class="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-start gap-2"
+      >
+        <svg
+          class="h-5 w-5 text-red-500 flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         <span>{{this.errorMessage}}</span>
       </div>
@@ -19,7 +37,10 @@
     <form class="space-y-6" {{on "submit" this.createBrand}}>
       <div class="space-y-4">
         <div>
-          <label for="brand-name" class="block text-sm font-medium text-text">Brand name</label>
+          <label
+            for="brand-name"
+            class="block text-sm font-medium text-text"
+          >Brand name</label>
           <input
             id="brand-name"
             name="name"
@@ -33,7 +54,10 @@
         </div>
 
         <div>
-          <label for="brand-description" class="block text-sm font-medium text-text">Description (Optional)</label>
+          <label
+            for="brand-description"
+            class="block text-sm font-medium text-text"
+          >Description (Optional)</label>
           <textarea
             id="brand-description"
             name="description"
@@ -46,7 +70,8 @@
         </div>
 
         <div>
-          <label for="logo-url" class="block text-sm font-medium text-text">Logo URL (Optional)</label>
+          <label for="logo-url" class="block text-sm font-medium text-text">Logo
+            URL (Optional)</label>
           <input
             id="logo-url"
             name="logoUrl"
@@ -66,9 +91,24 @@
           class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 transition-colors cursor-pointer"
         >
           {{#if this.isLoading}}
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            <svg
+              class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
             Creating brand...
           {{else}}

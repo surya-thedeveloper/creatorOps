@@ -1,7 +1,7 @@
 import Route from '@ember/routing/route';
 import { service } from '@ember/service';
 import type ApiService from '../../services/api';
-import type Store from '@ember/data/store';
+import type Store from '@ember-data/store';
 import RSVP from 'rsvp';
 
 export default class DashboardRoute extends Route {

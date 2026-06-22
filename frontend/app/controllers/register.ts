@@ -1,5 +1,5 @@
 import Controller from '@ember/controller';
-import RouterService from '@ember/routing/router-service';
+import type RouterService from '@ember/routing/router-service';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
@@ -23,12 +23,14 @@ export default class RegisterController extends Controller {
 
   @action
   async register(event: Event) {
-    console.log('Register action triggered');
+    // SEC-01: preventDefault must be called first — before any early returns —
+    // to prevent the browser from doing a native form POST that exposes credentials in the URL.
+    event.preventDefault();
+
     if (!this.termsAccepted) {
       this.errorMessage = 'You must accept the Terms of Service.';
       return;
     }
-    event.preventDefault();
 
     if (!this.name || !this.email || !this.password || !this.confirmPassword) {
       this.errorMessage = 'All fields are required.';
@@ -50,7 +52,6 @@ export default class RegisterController extends Controller {
 
     try {
       // 1. Call Register endpoint
-    console.log('Calling register API with', { name: this.name, email: this.email });
       await this.api.post('auth/register', {
         name: this.name,
         email: this.email,
@@ -60,9 +61,9 @@ export default class RegisterController extends Controller {
       this.toast.success('Registration successful! Logging in...');
 
       // 2. Perform automatic Login after registration
+      // API-01: Backend returns { token, user } — not { accessToken, refreshToken, user }
       const loginResponse = await this.api.post<{
-        accessToken: string;
-        refreshToken: string;
+        token: string;
         user: {
           id: number;
           name: string;
@@ -78,8 +79,7 @@ export default class RegisterController extends Controller {
 
       // 3. Save session details
       this.session.saveSession({
-        token: loginResponse.accessToken,
-        refreshToken: loginResponse.refreshToken,
+        token: loginResponse.token,
         email: loginResponse.user.email,
         role: loginResponse.user.role,
         id: loginResponse.user.id,
@@ -91,7 +91,8 @@ export default class RegisterController extends Controller {
       // 4. Since new users don't have an organization, transition to organization setup wizard
       this.router.transitionTo('setup.organization');
     } catch (error: any) {
-      this.errorMessage = error.message || 'Registration failed. Please try again.';
+      this.errorMessage =
+        error.message || 'Registration failed. Please try again.';
       this.toast.error(this.errorMessage);
     } finally {
       this.isLoading = false;

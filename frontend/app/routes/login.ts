@@ -14,7 +14,11 @@ export default class LoginRoute extends Route {
       } else if (!this.session.brandId || this.session.brandId === 'null') {
         this.router.transitionTo('setup.brand');
       } else {
-        this.router.transitionTo('authenticated.org.brand.content', this.session.orgId, this.session.brandId);
+        this.router.transitionTo(
+          'authenticated.org.brand.content',
+          this.session.orgId,
+          this.session.brandId,
+        );
       }
     }
   }

@@ -10,7 +10,7 @@ export default class AuthenticatedOrgBrandRoute extends Route {
   async model(params: { org_id: string; brand_id: string }) {
     this.session.selectOrg(params.org_id);
     this.session.selectBrand(params.brand_id);
-    
+
     try {
       const brand = await this.store.findRecord('brand', params.brand_id);
       return brand;

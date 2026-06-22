@@ -3,8 +3,19 @@ import type UserModel from './user';
 import type ContentModel from './content';
 
 export default class AssignmentModel extends Model {
-  @attr('string') declare assignmentType: 'RESEARCH' | 'SCRIPT' | 'PRODUCTION' | 'EDITING' | 'REVIEW' | 'PUBLISHING' | 'OTHER';
-  @attr('string') declare status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+  @attr('string') declare assignmentType:
+    | 'RESEARCH'
+    | 'SCRIPT'
+    | 'PRODUCTION'
+    | 'EDITING'
+    | 'REVIEW'
+    | 'PUBLISHING'
+    | 'OTHER';
+  @attr('string') declare status:
+    | 'PENDING'
+    | 'IN_PROGRESS'
+    | 'COMPLETED'
+    | 'BLOCKED';
   @attr('string') declare notes: string | null;
   @attr('date') declare dueDate: Date | null;
   @attr('date') declare startedAt: Date | null;

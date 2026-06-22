@@ -2,7 +2,7 @@ import Controller from '@ember/controller';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
-import RouterService from '@ember/routing/router-service';
+import type RouterService from '@ember/routing/router-service';
 import type ApiService from '../services/api';
 import type SessionService from '../services/session';
 import type ToastService from '../services/toast';
@@ -30,9 +30,9 @@ export default class LoginController extends Controller {
     this.errorMessage = '';
 
     try {
+      // API-01: Backend returns { token, user } — field is `token`, not `accessToken`
       const response = await this.api.post<{
-        accessToken: string;
-        refreshToken: string;
+        token: string;
         user: {
           id: number;
           name: string;
@@ -47,8 +47,8 @@ export default class LoginController extends Controller {
       });
 
       this.session.saveSession({
-        token: response.accessToken,
-        refreshToken: response.refreshToken,
+        token: response.token,
+        name: response.user.name,
         email: response.user.email,
         role: response.user.role,
         id: response.user.id,
@@ -61,14 +61,20 @@ export default class LoginController extends Controller {
       if (!orgId) {
         this.router.transitionTo('setup.organization');
       } else {
-        // Find if they have brands
+        // Find if they have brands; default to setup.brand if none exist
         try {
           const brands = await this.api.get<any>('brands');
-          const brandList = Array.isArray(brands) ? brands : (brands?.content || []);
+          const brandList = Array.isArray(brands)
+            ? brands
+            : brands?.content || [];
           if (brandList.length > 0) {
             const firstBrand = brandList[0];
             this.session.selectBrand(String(firstBrand.id));
-            this.router.transitionTo('authenticated.org.brand.content', String(orgId), String(firstBrand.id));
+            this.router.transitionTo(
+              'authenticated.org.brand.content',
+              String(orgId),
+              String(firstBrand.id),
+            );
           } else {
             this.router.transitionTo('setup.brand');
           }

@@ -2,10 +2,12 @@ import Controller from '@ember/controller';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
-import type Store from '@ember/data/store';
-import type ToastService from '../../../services/toast';
+import type Store from '@ember-data/store';
+import type ToastService from '../../../../services/toast';
+import { getOwner } from '@ember/application';
 
 export default class AuthenticatedOrgBrandContentController extends Controller {
+  declare model: any;
   @service declare store: Store;
   @service declare toast: ToastService;
 
@@ -20,24 +22,43 @@ export default class AuthenticatedOrgBrandContentController extends Controller {
   @tracked newDescription = '';
   @tracked newDueDate = '';
 
-  stages = ['IDEA', 'RESEARCH', 'SCRIPT', 'PRODUCTION', 'EDITING', 'REVIEW', 'SCHEDULED', 'PUBLISHED'];
-  contentTypes = ['YOUTUBE_VIDEO', 'REEL', 'SHORT', 'BLOG', 'LINKEDIN_POST', 'PODCAST', 'OTHER'];
+  stages = [
+    'IDEA',
+    'RESEARCH',
+    'SCRIPT',
+    'PRODUCTION',
+    'EDITING',
+    'REVIEW',
+    'SCHEDULED',
+    'PUBLISHED',
+  ];
+  contentTypes = [
+    'YOUTUBE_VIDEO',
+    'REEL',
+    'SHORT',
+    'BLOG',
+    'LINKEDIN_POST',
+    'PODCAST',
+    'OTHER',
+  ];
   priorities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
   get filteredContents() {
-    let contents = this.model as any[] || [];
+    let contents = (this.model as any[]) || [];
 
     if (this.searchTitle) {
       const query = this.searchTitle.toLowerCase();
-      contents = contents.filter(c => c.title && c.title.toLowerCase().includes(query));
+      contents = contents.filter(
+        (c) => c.title && c.title.toLowerCase().includes(query),
+      );
     }
 
     if (this.filterType) {
-      contents = contents.filter(c => c.type === this.filterType);
+      contents = contents.filter((c) => c.type === this.filterType);
     }
 
     if (this.filterPriority) {
-      contents = contents.filter(c => c.priority === this.filterPriority);
+      contents = contents.filter((c) => c.priority === this.filterPriority);
     }
 
     return contents;
@@ -46,17 +67,17 @@ export default class AuthenticatedOrgBrandContentController extends Controller {
   // Get items grouped by stage
   get contentsByStage() {
     const groups: Record<string, any[]> = {};
-    this.stages.forEach(stage => {
+    this.stages.forEach((stage) => {
       groups[stage] = [];
     });
 
-    this.filteredContents.forEach(content => {
+    this.filteredContents.forEach((content) => {
       const stage = content.stage || 'IDEA';
       if (groups[stage]) {
         groups[stage].push(content);
       } else {
         // Fallback for custom/unrecognized stages
-        groups['IDEA'].push(content);
+        groups['IDEA']?.push(content);
       }
     });
 
@@ -143,6 +164,8 @@ export default class AuthenticatedOrgBrandContentController extends Controller {
   }
 
   private modelForRoute(routeName: string) {
-    return (this.owner as any).lookup(`route:${routeName}`).modelFor(routeName);
+    return (getOwner(this) as any)
+      .lookup(`route:${routeName}`)
+      .modelFor(routeName);
   }
 }

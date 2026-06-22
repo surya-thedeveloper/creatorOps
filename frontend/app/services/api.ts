@@ -17,18 +17,15 @@ export default class ApiService extends Service {
   private host = 'http://localhost:8080';
   private namespace = 'api/v1';
 
-  async request<T>(
-    path: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.host}/${this.namespace}/${path.replace(/^\//, '')}`;
-    
+
     const headers = new Headers(options.headers || {});
     if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
       headers.set('Content-Type', 'application/json');
     }
     headers.set('Accept', 'application/json');
-    
+
     // Auto-generate Correlation ID
     headers.set('X-Correlation-Id', crypto.randomUUID());
 
@@ -40,8 +37,9 @@ export default class ApiService extends Service {
     // Auto-attach Idempotency-Key for POST requests on AI generation endpoints
     const isAiGenerationEndpoint =
       options.method?.toUpperCase() === 'POST' &&
-      (path.includes('/ai/contents/') && (path.endsWith('/brainstorm') || path.endsWith('/generate-script')));
-    
+      path.includes('/ai/contents/') &&
+      (path.endsWith('/brainstorm') || path.endsWith('/generate-script'));
+
     if (isAiGenerationEndpoint && !headers.has('Idempotency-Key')) {
       headers.set('Idempotency-Key', crypto.randomUUID());
     }

@@ -2,7 +2,7 @@ import Controller from '@ember/controller';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
 import { service } from '@ember/service';
-import RouterService from '@ember/routing/router-service';
+import type RouterService from '@ember/routing/router-service';
 import type ApiService from '../../services/api';
 import type SessionService from '../../services/session';
 import type ToastService from '../../services/toast';
@@ -11,7 +11,7 @@ export default class SetupOrganizationController extends Controller {
   @service declare api: ApiService;
   @service declare session: SessionService;
   @service declare toast: ToastService;
-@service declare router: RouterService;
+  @service declare router: RouterService;
 
   @tracked name = '';
   @tracked logoUrl = '';
@@ -41,10 +41,13 @@ export default class SetupOrganizationController extends Controller {
       });
 
       this.session.selectOrg(String(response.id), response.name);
-      this.toast.success(`Organization "${response.name}" created successfully!`);
+      this.toast.success(
+        `Organization "${response.name}" created successfully!`,
+      );
       this.router.transitionTo('setup.brand');
     } catch (error: any) {
-      this.errorMessage = error.message || 'Failed to create organization. Please try again.';
+      this.errorMessage =
+        error.message || 'Failed to create organization. Please try again.';
       this.toast.error(this.errorMessage);
     } finally {
       this.isLoading = false;

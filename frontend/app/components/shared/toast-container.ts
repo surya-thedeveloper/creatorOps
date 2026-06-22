@@ -40,5 +40,5 @@ export default setComponentTemplate(
   {{/each}}
 </div>
 `),
-  ToastContainerComponent
+  ToastContainerComponent,
 );

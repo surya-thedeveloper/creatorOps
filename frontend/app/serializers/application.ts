@@ -8,7 +8,7 @@ export default class ApplicationSerializer extends RESTSerializer {
     primaryModelClass: typeof Model,
     payload: any,
     id: string | null,
-    requestType: string
+    requestType: string,
   ) {
     const modelName = primaryModelClass.modelName; // e.g. 'content', 'brand'
     const singularKey = modelName;
@@ -37,7 +37,13 @@ export default class ApplicationSerializer extends RESTSerializer {
       normalizedPayload = payload;
     }
 
-    return super.normalizeResponse(store, primaryModelClass, normalizedPayload, id, requestType);
+    return super.normalizeResponse(
+      store,
+      primaryModelClass,
+      normalizedPayload,
+      id,
+      requestType,
+    );
   }
 
   // Helper to pluralize keys matching path Conventions

@@ -14,9 +14,13 @@ export default class AuthenticatedRoute extends Route {
       const orgId = this.session.orgId;
       const brandId = this.session.brandId;
 
-      if (!orgId || orgId === 'null') {
+      // ROUTE-04: Check for falsy or 'null'/'undefined' strings robustly
+      const hasOrg = orgId && orgId !== 'null' && orgId !== 'undefined';
+      const hasBrand = brandId && brandId !== 'null' && brandId !== 'undefined';
+
+      if (!hasOrg) {
         this.router.transitionTo('setup.organization');
-      } else if (!brandId || brandId === 'null') {
+      } else if (!hasBrand) {
         this.router.transitionTo('setup.brand');
       }
     }

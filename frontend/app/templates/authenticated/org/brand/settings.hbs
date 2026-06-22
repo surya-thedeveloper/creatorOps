@@ -1,13 +1,17 @@
 <div class="max-w-2xl bg-card border border-border rounded-xl p-8 shadow-sm">
   <div class="mb-6 border-b border-border pb-4">
     <h2 class="text-xl font-bold text-text">Brand Settings</h2>
-    <p class="text-xs text-text-secondary mt-1">Configure profile details, description, and visual assets for this content brand.</p>
+    <p class="text-xs text-text-secondary mt-1">Configure profile details,
+      description, and visual assets for this content brand.</p>
   </div>
 
   <form class="space-y-6" {{on "submit" this.saveBrand}}>
     <div class="space-y-4">
       <div>
-        <label for="brand-name" class="block text-xs font-semibold text-text uppercase tracking-wider">Brand Name</label>
+        <label
+          for="brand-name"
+          class="block text-xs font-semibold text-text uppercase tracking-wider"
+        >Brand Name</label>
         <input
           id="brand-name"
           type="text"
@@ -19,7 +23,10 @@
       </div>
 
       <div>
-        <label for="brand-desc" class="block text-xs font-semibold text-text uppercase tracking-wider">Description</label>
+        <label
+          for="brand-desc"
+          class="block text-xs font-semibold text-text uppercase tracking-wider"
+        >Description</label>
         <textarea
           id="brand-desc"
           rows="4"
@@ -30,7 +37,10 @@
       </div>
 
       <div>
-        <label for="brand-logo" class="block text-xs font-semibold text-text uppercase tracking-wider">Logo Image URL</label>
+        <label
+          for="brand-logo"
+          class="block text-xs font-semibold text-text uppercase tracking-wider"
+        >Logo Image URL</label>
         <input
           id="brand-logo"
           type="url"

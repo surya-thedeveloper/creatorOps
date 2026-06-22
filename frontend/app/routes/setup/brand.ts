@@ -13,7 +13,11 @@ export default class SetupBrandRoute extends Route {
     } else if (!this.session.orgId || this.session.orgId === 'null') {
       this.router.transitionTo('setup.organization');
     } else if (this.session.brandId && this.session.brandId !== 'null') {
-      this.router.transitionTo('authenticated.org.brand.content', this.session.orgId, this.session.brandId);
+      this.router.transitionTo(
+        'authenticated.org.brand.content',
+        this.session.orgId,
+        this.session.brandId,
+      );
     }
   }
 }
