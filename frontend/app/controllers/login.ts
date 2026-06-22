@@ -19,6 +19,11 @@ export default class LoginController extends Controller {
   @tracked isLoading = false;
 
   @action
+  updateField(field: 'email' | 'password', event: Event) {
+    this[field] = (event.target as HTMLInputElement).value;
+  }
+
+  @action
   async login(event: Event) {
     event.preventDefault();
     if (!this.email || !this.password) {

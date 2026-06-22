@@ -19,6 +19,11 @@ export default class SetupOrganizationController extends Controller {
   @tracked isLoading = false;
 
   @action
+  updateField(field: 'name' | 'logoUrl', event: Event) {
+    this[field] = (event.target as HTMLInputElement).value;
+  }
+
+  @action
   async createOrg(event: Event) {
     event.preventDefault();
 

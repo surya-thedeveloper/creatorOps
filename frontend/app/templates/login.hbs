@@ -53,7 +53,7 @@
             class="mt-1 block w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-primary text-text bg-background sm:text-sm transition-all"
             placeholder="you@example.com"
             value={{this.email}}
-            {{on "input" (pick "target.value" (mut this.email))}}
+            {{on "input" (fn this.updateField "email")}}
           />
         </div>
 
@@ -71,7 +71,7 @@
             class="mt-1 block w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-primary text-text bg-background sm:text-sm transition-all"
             placeholder="••••••••"
             value={{this.password}}
-            {{on "input" (pick "target.value" (mut this.password))}}
+            {{on "input" (fn this.updateField "password")}}
           />
         </div>
       </div>

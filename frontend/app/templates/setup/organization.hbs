@@ -47,8 +47,7 @@
             required
             class="mt-1 block w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-primary text-text bg-background sm:text-sm transition-all"
             placeholder="e.g. SLAY Media"
-            value={{this.name}}
-            {{on "input" (pick "target.value" (mut this.name))}}
+            {{on "input" (fn this.updateField "name")}}
           />
         </div>
 
@@ -61,8 +60,7 @@
             type="url"
             class="mt-1 block w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-primary text-text bg-background sm:text-sm transition-all"
             placeholder="https://example.com/logo.png"
-            value={{this.logoUrl}}
-            {{on "input" (pick "target.value" (mut this.logoUrl))}}
+            {{on "input" (fn this.updateField "logoUrl")}}
           />
         </div>
       </div>

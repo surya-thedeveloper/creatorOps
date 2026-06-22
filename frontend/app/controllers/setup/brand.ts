@@ -20,6 +20,11 @@ export default class SetupBrandController extends Controller {
   @tracked isLoading = false;
 
   @action
+  updateField(field: 'name' | 'description' | 'logoUrl', event: Event) {
+    this[field] = (event.target as HTMLInputElement).value;
+  }
+
+  @action
   async createBrand(event: Event) {
     event.preventDefault();
 

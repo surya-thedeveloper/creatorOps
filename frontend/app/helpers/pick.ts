@@ -9,10 +9,10 @@ export default helper(function pick([path, callback]: [string, any]) {
         val = val[part];
       }
     }
-    if (typeof callback === 'function') {
-      callback(val);
-    } else if (callback && typeof callback.update === 'function') {
+    if (callback && typeof callback.update === 'function') {
       callback.update(val);
+    } else if (typeof callback === 'function') {
+      callback(val);
     }
   };
 });

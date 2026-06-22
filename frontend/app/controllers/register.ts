@@ -21,6 +21,14 @@ export default class RegisterController extends Controller {
   @tracked isLoading = false;
 
   @action
+  updateField(
+    field: 'name' | 'email' | 'password' | 'confirmPassword',
+    event: Event,
+  ) {
+    this[field] = (event.target as HTMLInputElement).value;
+  }
+
+  @action
   async register(event: Event) {
     // SEC-01: preventDefault must be called first — before any early returns —
     // to prevent the browser from doing a native form POST that exposes credentials in the URL.
