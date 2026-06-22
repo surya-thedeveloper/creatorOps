@@ -10,7 +10,6 @@ import type ToastService from '../services/toast';
 export default class RegisterController extends Controller {
   @service declare api: ApiService;
   @service declare router: RouterService;
-  @tracked termsAccepted = false;
   @service declare session: SessionService;
   @service declare toast: ToastService;
 
@@ -26,11 +25,6 @@ export default class RegisterController extends Controller {
     // SEC-01: preventDefault must be called first — before any early returns —
     // to prevent the browser from doing a native form POST that exposes credentials in the URL.
     event.preventDefault();
-
-    if (!this.termsAccepted) {
-      this.errorMessage = 'You must accept the Terms of Service.';
-      return;
-    }
 
     if (!this.name || !this.email || !this.password || !this.confirmPassword) {
       this.errorMessage = 'All fields are required.';
